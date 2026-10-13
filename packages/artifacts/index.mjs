@@ -1,0 +1,42 @@
+import {mkdir,readFile,writeFile,rename,open} from 'node:fs/promises';
+import {join} from 'node:path';
+import {createHash,randomUUID} from 'node:crypto';
+import {canonicalize} from 'json-canonicalize';
+
+const IMMUTABLE=['protocol','id','projectId','kind','revision','dependencies','payload','evidence'];
+export const immutableContent=a=>Object.fromEntries(IMMUTABLE.map(k=>[k,a[k]]));
+export const digest=value=>'sha256:'+createHash('sha256').update(canonicalize(value),'utf8').digest('hex');
+export const artifactDigest=a=>digest(immutableContent(a));
+
+export class ArtifactStore {
+ constructor(directory){this.directory=directory;}
+ path(id,revision){
+  if(!/^[a-zA-Z0-9._-]+$/.test(id)||!Number.isSafeInteger(revision)||revision<1)throw new Error('Invalid artifact ID/revision');
+  return join(this.directory,id,String(revision)+'.json');
+ }
+ async read(id,revision){return JSON.parse(await readFile(this.path(id,revision),'utf8'));}
+ async create(artifact){
+  const target=this.path(artifact.id,artifact.revision);
+  if(artifact.protocol!=='mip/0.7')throw new Error('Unsupported protocol');
+  if(!['draft','in_review','approved'].includes(artifact.lifecycle))throw new Error('Only unlocked revisions can be created');
+  await mkdir(join(this.directory,artifact.id),{recursive:true});
+  const stream=await open(target,'wx');
+  try{await stream.writeFile(JSON.stringify({...artifact,contentDigest:undefined},null,2)+'\n');}
+  finally{await stream.close();}
+  return {id:artifact.id,revision:artifact.revision,digest:artifactDigest(artifact)};
+ }
+ async revise(id,revision,mutate){
+  const old=await this.read(id,revision);
+  const next=structuredClone(old);
+  mutate(next);
+  next.revision=revision+1;
+  next.lifecycle='draft';
+  next.approvals=[];
+  delete next.lock;
+  return this.create(next);
+ }
+ async history(id){
+  const {readdir}=await import('node:fs/promises');
+  return (await readdir(join(this.directory,id))).filter(n=>/^\d+\.json$/.test(n)).map(n=>Number(n.slice(0,-5))).sort((a,b)=>a-b);
+ }
+}
