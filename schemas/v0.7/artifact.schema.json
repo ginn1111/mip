@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mip.dev/schemas/0.7/artifact.schema.json",
+  "title": "MIP Artifact",
+  "type": "object",
+  "required": [
+    "protocol",
+    "id",
+    "projectId",
+    "kind",
+    "revision",
+    "lifecycle",
+    "dependencies",
+    "payload",
+    "evidence",
+    "approvals"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "protocol": {
+      "const": "mip/0.7"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "intent-profile",
+        "semantic-contract",
+        "prototype-spec",
+        "prototype-review",
+        "implementation-contract",
+        "verification-record"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "lifecycle": {
+      "enum": [
+        "draft",
+        "in_review",
+        "approved",
+        "locked",
+        "superseded"
+      ]
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reference"
+      }
+    },
+    "payload": {
+      "type": "object"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/approval"
+      }
+    },
+    "lock": {
+      "$ref": "#/$defs/lock"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "lifecycle": {
+            "const": "locked"
+          }
+        },
+        "required": [
+          "lifecycle"
+        ]
+      },
+      "then": {
+        "required": [
+          "lock"
+        ],
+        "properties": {
+          "approvals": {
+            "contains": {
+              "properties": {
+                "decision": {
+                  "const": "approved"
+                },
+                "actor": {
+                  "properties": {
+                    "role": {
+                      "const": "human"
+                    }
+                  },
+                  "required": [
+                    "role"
+                  ]
+                }
+              },
+              "required": [
+                "decision",
+                "actor"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "reference": {
+      "type": "object",
+      "required": [
+        "id",
+        "revision",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "id",
+        "role"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "human",
+            "agent",
+            "system",
+            "validator"
+          ]
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "required": [
+        "decision",
+        "actor",
+        "timestamp",
+        "reviewedDigest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "enum": [
+            "approved",
+            "changes_requested"
+          ]
+        },
+        "actor": {
+          "$ref": "#/$defs/actor"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reviewedDigest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "uri",
+        "digest",
+        "mediaType"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "uri": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "mediaType": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "lock": {
+      "type": "object",
+      "required": [
+        "digest",
+        "timestamp",
+        "dependencyDigests"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dependencyDigests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/digest"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

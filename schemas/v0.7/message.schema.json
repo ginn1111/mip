@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mip.dev/schemas/0.7/message.schema.json",
+  "title": "MIP Message",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "messageId",
+    "sessionId",
+    "actor",
+    "type",
+    "artifactRefs",
+    "payload",
+    "timestamp"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "mip/0.7"
+    },
+    "messageId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sessionId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "correlationId": {
+      "type": "string"
+    },
+    "actor": {
+      "$ref": "#/$defs/actor"
+    },
+    "type": {
+      "enum": [
+        "INTENT",
+        "INTERPRETATION",
+        "CLARIFICATION",
+        "GLOSSARY_RESOLUTION",
+        "SPEC_PROPOSAL",
+        "PREVIEW_READY",
+        "REFINE",
+        "APPROVAL",
+        "LOCK_REQUEST",
+        "GATE_RESULT",
+        "VERIFICATION_RESULT"
+      ]
+    },
+    "artifactRefs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reference"
+      }
+    },
+    "payload": {
+      "type": "object"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "actor": {
+      "type": "object",
+      "required": [
+        "id",
+        "role"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "enum": [
+            "human",
+            "agent",
+            "system",
+            "validator"
+          ]
+        }
+      }
+    },
+    "reference": {
+      "type": "object",
+      "required": [
+        "id",
+        "revision",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

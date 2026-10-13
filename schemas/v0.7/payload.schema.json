@@ -1,0 +1,489 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mip.dev/schemas/0.7/payload.schema.json",
+  "title": "MIP phase payload",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "kind": {
+          "const": "intent-profile"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "scene",
+            "goal",
+            "constraints"
+          ],
+          "properties": {
+            "scene": {
+              "type": "string",
+              "minLength": 1
+            },
+            "goal": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "references": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "trigger": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "kind": {
+          "const": "semantic-contract"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "concepts",
+            "blockingAmbiguities"
+          ],
+          "properties": {
+            "concepts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "phrase",
+                  "interpretation",
+                  "status"
+                ],
+                "properties": {
+                  "phrase": {
+                    "type": "string"
+                  },
+                  "interpretation": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "resolved",
+                      "ambiguous",
+                      "unknown"
+                    ]
+                  },
+                  "glossaryId": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "blockingAmbiguities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "kind": {
+          "const": "prototype-spec"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "durationMs",
+            "fps",
+            "actors",
+            "states",
+            "transitions",
+            "tracks",
+            "storyboard",
+            "scenarios"
+          ],
+          "properties": {
+            "durationMs": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "fps": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "actors": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "states": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "transitions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "from",
+                  "to",
+                  "trigger",
+                  "durationMs"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "to": {
+                    "type": "string"
+                  },
+                  "trigger": {
+                    "type": "string"
+                  },
+                  "durationMs": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            },
+            "tracks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "actorId",
+                  "property",
+                  "keyframes"
+                ],
+                "properties": {
+                  "actorId": {
+                    "type": "string"
+                  },
+                  "property": {
+                    "type": "string"
+                  },
+                  "keyframes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "timeMs",
+                        "value"
+                      ],
+                      "properties": {
+                        "timeMs": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "value": {
+                          "oneOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "number"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "storyboard": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "timeMs",
+                  "caption"
+                ],
+                "properties": {
+                  "timeMs": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "caption": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "scenarios": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "initialState",
+                  "events"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "initialState": {
+                    "type": "string"
+                  },
+                  "events": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "timeMs",
+                        "type"
+                      ],
+                      "properties": {
+                        "timeMs": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "type": {
+                          "type": "string"
+                        },
+                        "payload": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "kind": {
+          "const": "prototype-review"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "prototypeRef",
+            "scenarioReviews",
+            "decision"
+          ],
+          "properties": {
+            "prototypeRef": {
+              "$ref": "#/$defs/reference"
+            },
+            "scenarioReviews": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "scenarioId",
+                  "accepted"
+                ],
+                "properties": {
+                  "scenarioId": {
+                    "type": "string"
+                  },
+                  "accepted": {
+                    "type": "boolean"
+                  },
+                  "comments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "decision": {
+              "enum": [
+                "approved",
+                "changes_requested"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "kind": {
+          "const": "implementation-contract"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "runtime",
+            "bindings",
+            "invariants"
+          ],
+          "properties": {
+            "runtime": {
+              "type": "string"
+            },
+            "bindings": {
+              "type": "object"
+            },
+            "invariants": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "kind",
+        "payload"
+      ],
+      "properties": {
+        "kind": {
+          "const": "verification-record"
+        },
+        "payload": {
+          "type": "object",
+          "required": [
+            "implementationRef",
+            "checks",
+            "result"
+          ],
+          "properties": {
+            "implementationRef": {
+              "$ref": "#/$defs/reference"
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "passed"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "passed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "result": {
+              "enum": [
+                "pass",
+                "fail"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "required": [
+        "id",
+        "revision",
+        "digest"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}
