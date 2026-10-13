@@ -1,7 +1,7 @@
-name: MIP M1 Conformance
+name: MIP Conformance
 on:
   push:
-    branches: [main, feat/m1-protocol-foundation]
+    branches: [main, 'feat/**']
   pull_request:
 jobs:
   schema-tests:
