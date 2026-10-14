@@ -22,6 +22,8 @@ export async function validateGate(phase,inputs,loadRef){
   else if(a.lifecycle!=='locked')violations.push({code:'NOT_LOCKED',artifact:key});
   const hash=artifactDigest(a);
   if(a.lock?.digest!==hash)violations.push({code:'DIGEST_MISMATCH',artifact:key});
+  if(a.lock && JSON.stringify(a.lock.dependencyDigests)!==JSON.stringify((a.dependencies??[]).map(x=>x.digest)))
+   violations.push({code:'LOCK_DEPENDENCY_MISMATCH',artifact:key});
   if(!a.approvals?.some(x=>x.decision==='approved'&&x.actor?.role==='human'&&x.reviewedDigest===hash))
    violations.push({code:'MISSING_HUMAN_APPROVAL',artifact:key});
   if(a.kind==='semantic-contract'&&a.payload.blockingAmbiguities?.length)violations.push({code:'UNRESOLVED_AMBIGUITY',artifact:key});
