@@ -1,12 +1,20 @@
 # Scorpio reviewer example
 
-The deterministic evaluator produces three synchronized representations:
-- Storyboard: latest caption at current timeline position
-- Transitions: named active intervals with start and duration
-- Animation: interpolated actor values for a scene renderer
-
-Run `npm test` to exercise the timeline/review example. The human-facing web renderer and evidence-bound approvals are tracked by AGE-26 and AGE-27; this initial adapter does not claim those are complete.
+The deterministic evaluator produces synchronized storyboard, transition and animation views. Review evidence covers every required scenario segment and binds approval to the displayed prototype revision and SHA-256 digest.
 
 ## Interactive reviewer
 
-Run `node examples/scorpio/serve.mjs` from the repository root, then visit http://127.0.0.1:4173/. The browser app provides a Canvas 2D scene, scrub/play/pause, scenario selection, storyboard jumps, current transition display and timestamped comments. Comments are ephemeral and never constitute approvals or creative locks. This is a prototype; reviewer persistence and digest-bound approval require AGE-27.
+Set host-owned credentials, then run the local server:
+
+```sh
+MIP_APPROVAL_SECRET='replace-with-random-secret' \
+MIP_REVIEW_TOKEN='review-session-token' \
+MIP_REVIEWER_ID='designer-id' \
+node examples/scorpio/serve.mjs
+```
+
+Visit http://127.0.0.1:4173/. Enter `MIP_REVIEW_TOKEN`, inspect all segments, then approve. Server persists immutable `prototype-spec` and `prototype-review` artifacts plus signed lock sidecars under `.mip/reviews` by default. Override with `MIP_REVIEW_DIR`.
+
+`MIP_REVIEW_TOKEN` identifies an authenticated local review session in this reference host. Production adapters must replace token equality with their trusted host authentication callback. `MIP_APPROVAL_SECRET` signs persisted human approval attestations and must remain host-only.
+
+Run `npm test` for unit, negative and HTTP integration coverage.
