@@ -17,7 +17,7 @@ async function setup(fn){
  }finally{await rm(dir,{force:true,recursive:true});}
 }
 test('rejects agent approval, stale digest and missing identity',()=>setup(async({service,a})=>{
- await assert.rejects(()=>service.lock(a.id,1,{principal:'agent',reviewedDigest:artifactDigest(a)}),/human identity/);
+ await assert.rejects(()=>service.lock(a.id,1,{principal:'agent',decision:'approved',reviewedDigest:artifactDigest(a)}),/human identity/);
  await assert.rejects(()=>service.lock(a.id,1,{principal:'verified-session',decision:'approved',reviewedDigest:'sha256:'+'0'.repeat(64)}),/Stale review/);
 }));
 test('seals once with verified human, preserves original and passes gate',()=>setup(async({store,service,a})=>{
