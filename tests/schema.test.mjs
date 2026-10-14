@@ -40,13 +40,25 @@ test('six phase payload variants',()=>{
  const fixtures=[
  ['intent-profile',{scene:'scorpio',goal:'discovery',constraints:[]}],
  ['semantic-contract',{concepts:[],blockingAmbiguities:[]}],
- ['prototype-spec',{durationMs:5000,fps:30,actors:[],states:[],transitions:[],tracks:[],storyboard:[],scenarios:[]}],
- ['prototype-review',{prototypeRef:{id:'proto',revision:1,digest},scenarioReviews:[],decision:'approved'}],
+ ['prototype-spec',{durationMs:5000,fps:30,actors:[],states:[],transitions:[],tracks:[],storyboard:[],scenarios:[{id:'s',initialState:'idle',events:[]}],reviewSegments:[{id:'intro',startMs:0,endMs:5000,scenarioIds:['s']}]}],
+ ['prototype-review',{prototypeRef:{id:'proto',revision:1,digest},reviewer:human,scenarioReviews:[{scenarioId:'s',accepted:true,segmentReviews:[{segmentId:'intro',accepted:true,comments:[]}]}],decision:'approved'}],
  ['implementation-contract',{runtime:'r3f',bindings:{},invariants:[]}],
  ['verification-record',{implementationRef:{id:'impl',revision:1,digest},checks:[],result:'pass'}]
  ];
  for(const [kind,data] of fixtures) assert.equal(payload({kind,payload:data}),true,kind+JSON.stringify(payload.errors));
  assert.equal(payload({kind:'semantic-contract',payload:{concepts:[],blockingAmbiguities:['magnetic']}}),false);
+});
+test('prototype review requires exact reviewer and segment evidence',()=>{
+ const prototype={kind:'prototype-spec',payload:{durationMs:5000,fps:30,actors:[],states:[],transitions:[],tracks:[],storyboard:[],scenarios:[{id:'s',initialState:'idle',events:[]}],reviewSegments:[{id:'intro',startMs:0,endMs:5000,scenarioIds:['s']}]}};
+ const review={kind:'prototype-review',payload:{prototypeRef:{id:'proto',revision:1,digest},reviewer:human,scenarioReviews:[{scenarioId:'s',accepted:true,segmentReviews:[{segmentId:'intro',accepted:true,comments:[]}]}],decision:'approved'}};
+ assert.equal(payload(prototype),true,JSON.stringify(payload.errors));
+ assert.equal(payload(review),true,JSON.stringify(payload.errors));
+ assert.equal(payload({kind:'prototype-review',payload:{...review.payload,reviewer:undefined}}),false);
+});
+test('creative approval supports host attestation',()=>{
+ const approval={decision:'approved',actor:human,timestamp:'2026-10-13T10:00:00Z',reviewedDigest:digest,attestation:{issuer:'review-host',algorithm:'hmac-sha256',signature:digest}};
+ const locked={...core,kind:'prototype-review',lifecycle:'locked',approvals:[approval],lock:{digest,timestamp:'2026-10-13T10:01:00Z',dependencyDigests:[]}};
+ assert.equal(artifact(locked),true,JSON.stringify(artifact.errors));
 });
 test('canonicalization and digest invariants',()=>{
  const a={z:1,a:{b:2,a:1}},b={a:{a:1,b:2},z:1};
