@@ -18,16 +18,20 @@ async function setup(fn){
 }
 test('rejects agent approval, stale digest and missing identity',()=>setup(async({service,a})=>{
  await assert.rejects(()=>service.lock(a.id,1,{principal:'agent',reviewedDigest:artifactDigest(a)}),/human identity/);
- await assert.rejects(()=>service.lock(a.id,1,{principal:'verified-session',reviewedDigest:'sha256:'+'0'.repeat(64)}),/Stale review/);
+ await assert.rejects(()=>service.lock(a.id,1,{principal:'verified-session',decision:'approved',reviewedDigest:'sha256:'+'0'.repeat(64)}),/Stale review/);
 }));
 test('seals once with verified human, preserves original and passes gate',()=>setup(async({store,service,a})=>{
- const sealed=await service.lock(a.id,1,{principal:'verified-session',reviewedDigest:artifactDigest(a)});
+ const sealed=await service.lock(a.id,1,{principal:'verified-session',decision:'approved',reviewedDigest:artifactDigest(a)});
  assert.equal(sealed.lifecycle,'locked');
  assert.equal((await store.read('intent',1)).lifecycle,'draft');
  assert.equal((await validateGate('semantic',[sealed],async()=>{})).status,'PASS');
- await assert.rejects(()=>service.lock(a.id,1,{principal:'verified-session',reviewedDigest:artifactDigest(a)}),/EEXIST/);
+ await assert.rejects(()=>service.lock(a.id,1,{principal:'verified-session',decision:'approved',reviewedDigest:artifactDigest(a)}),/EEXIST/);
 }));
 test('concurrent seal attempts yield exactly one winner',()=>setup(async({service,a})=>{
- const attempts=await Promise.allSettled([1,2].map(()=>service.lock(a.id,1,{principal:'verified-session',reviewedDigest:artifactDigest(a)})));
+ const attempts=await Promise.allSettled([1,2].map(()=>service.lock(a.id,1,{principal:'verified-session',decision:'approved',reviewedDigest:artifactDigest(a)})));
  assert.equal(attempts.filter(x=>x.status==='fulfilled').length,1);
+}));
+
+test('requires explicit approval even from verified human',()=>setup(async({service,a})=>{
+ await assert.rejects(()=>service.lock(a.id,1,{principal:'verified-session',reviewedDigest:artifactDigest(a)}),/Explicit approval/);
 }));
