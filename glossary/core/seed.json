@@ -1,0 +1,821 @@
+[
+  {
+    "id": "motion.organic",
+    "revision": 1,
+    "term": "organic",
+    "domain": "motion",
+    "definition": "Natural-feeling motion without repetitive mechanical uniformity",
+    "aliases": [
+      "fluid",
+      "natural"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Natural-feeling motion without repetitive mechanical uniformity",
+        "motionHints": [
+          "gentle acceleration and coordinated secondary motion"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.anticipation",
+    "revision": 1,
+    "term": "anticipation",
+    "domain": "motion",
+    "definition": "Preparatory action before the main movement",
+    "aliases": [
+      "wind-up",
+      "preparation"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Preparatory action before the main movement",
+        "motionHints": [
+          "small pre-action displacement"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "cinematography.cinematic",
+    "revision": 1,
+    "term": "cinematic",
+    "domain": "cinematography",
+    "definition": "Film-like staging and pacing with clear narrative focus",
+    "aliases": [
+      "dramatic",
+      "filmic"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "cinematography"
+        ],
+        "meaning": "Film-like staging and pacing with clear narrative focus",
+        "motionHints": [
+          "coordinate framing lighting and rhythm"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.snappy",
+    "revision": 1,
+    "term": "snappy",
+    "domain": "timing",
+    "definition": "Quick deliberate motion with low perceived latency",
+    "aliases": [
+      "responsive",
+      "quick"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Quick deliberate motion with low perceived latency",
+        "motionHints": [
+          "short transition and crisp settle"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.weighty",
+    "revision": 1,
+    "term": "weighty",
+    "domain": "motion",
+    "definition": "Motion conveying perceived mass and inertia",
+    "aliases": [
+      "heavy",
+      "inertial"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Motion conveying perceived mass and inertia",
+        "motionHints": [
+          "controlled acceleration and longer settle"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "direction.magnetic",
+    "revision": 1,
+    "term": "magnetic",
+    "domain": "direction",
+    "definition": "Attraction of attention or subjects toward a focal point",
+    "aliases": [
+      "pulling",
+      "attracting"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "direction"
+        ],
+        "meaning": "Attraction of attention or subjects toward a focal point",
+        "motionHints": [
+          "focal pull or camera approach"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.ease-in",
+    "revision": 1,
+    "term": "ease-in",
+    "domain": "timing",
+    "definition": "Accelerating interpolation from rest",
+    "aliases": [
+      "accelerate"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Accelerating interpolation from rest",
+        "motionHints": [
+          "ease-in curve"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.ease-out",
+    "revision": 1,
+    "term": "ease-out",
+    "domain": "timing",
+    "definition": "Decelerating interpolation toward rest",
+    "aliases": [
+      "decelerate"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Decelerating interpolation toward rest",
+        "motionHints": [
+          "ease-out curve"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.ease-in-out",
+    "revision": 1,
+    "term": "ease-in-out",
+    "domain": "timing",
+    "definition": "Smooth acceleration and deceleration",
+    "aliases": [
+      "smooth ease"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Smooth acceleration and deceleration",
+        "motionHints": [
+          "s-curve"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.overshoot",
+    "revision": 1,
+    "term": "overshoot",
+    "domain": "motion",
+    "definition": "Movement beyond target followed by correction",
+    "aliases": [
+      "overtravel"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Movement beyond target followed by correction",
+        "motionHints": [
+          "exceed then settle"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.follow-through",
+    "revision": 1,
+    "term": "follow-through",
+    "domain": "motion",
+    "definition": "Parts continue moving after primary body stops",
+    "aliases": [
+      "trailing"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Parts continue moving after primary body stops",
+        "motionHints": [
+          "delayed secondary track"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.secondary-action",
+    "revision": 1,
+    "term": "secondary-action",
+    "domain": "motion",
+    "definition": "Supportive movement enhancing primary action",
+    "aliases": [
+      "secondary motion"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Supportive movement enhancing primary action",
+        "motionHints": [
+          "separate low-amplitude track"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "composition.staging",
+    "revision": 1,
+    "term": "staging",
+    "domain": "composition",
+    "definition": "Presentation that directs attention to the principal action",
+    "aliases": [
+      "focus"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "composition"
+        ],
+        "meaning": "Presentation that directs attention to the principal action",
+        "motionHints": [
+          "clear hierarchy and contrast"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "animation.squash-and-stretch",
+    "revision": 1,
+    "term": "squash-and-stretch",
+    "domain": "animation",
+    "definition": "Shape deformation emphasizing flexibility or force",
+    "aliases": [
+      "squash",
+      "stretch"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "animation"
+        ],
+        "meaning": "Shape deformation emphasizing flexibility or force",
+        "motionHints": [
+          "animated scale axes"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.arc",
+    "revision": 1,
+    "term": "arc",
+    "domain": "motion",
+    "definition": "Curved path that avoids mechanical straight-line travel",
+    "aliases": [
+      "curved trajectory"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Curved path that avoids mechanical straight-line travel",
+        "motionHints": [
+          "spline interpolation"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "animation.slow-in-slow-out",
+    "revision": 1,
+    "term": "slow-in-slow-out",
+    "domain": "animation",
+    "definition": "More drawings or smaller changes near beginning and end",
+    "aliases": [
+      "soft start",
+      "soft stop"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "animation"
+        ],
+        "meaning": "More drawings or smaller changes near beginning and end",
+        "motionHints": [
+          "nonlinear interpolation"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "animation.timing",
+    "revision": 1,
+    "term": "timing",
+    "domain": "animation",
+    "definition": "Spacing and duration of movement create its expressive character",
+    "aliases": [
+      "rhythm"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "animation"
+        ],
+        "meaning": "Spacing and duration of movement create its expressive character",
+        "motionHints": [
+          "temporal keyframe distribution"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "animation.spacing",
+    "revision": 1,
+    "term": "spacing",
+    "domain": "animation",
+    "definition": "Distance traveled between successive frames",
+    "aliases": [
+      "interframe movement"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "animation"
+        ],
+        "meaning": "Distance traveled between successive frames",
+        "motionHints": [
+          "velocity distribution"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "camera.parallax",
+    "revision": 1,
+    "term": "parallax",
+    "domain": "camera",
+    "definition": "Relative apparent displacement of layers at different depths",
+    "aliases": [
+      "depth offset"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "camera"
+        ],
+        "meaning": "Relative apparent displacement of layers at different depths",
+        "motionHints": [
+          "depth-scaled translation"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "camera.dolly-in",
+    "revision": 1,
+    "term": "dolly-in",
+    "domain": "camera",
+    "definition": "Moving camera toward subject without zooming lens",
+    "aliases": [
+      "push in"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "camera"
+        ],
+        "meaning": "Moving camera toward subject without zooming lens",
+        "motionHints": [
+          "camera position forward"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "camera.orbit",
+    "revision": 1,
+    "term": "orbit",
+    "domain": "camera",
+    "definition": "Camera moves around target along a curved path",
+    "aliases": [
+      "arc camera"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "camera"
+        ],
+        "meaning": "Camera moves around target along a curved path",
+        "motionHints": [
+          "camera rig orbit"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "camera.rack-focus",
+    "revision": 1,
+    "term": "rack-focus",
+    "domain": "camera",
+    "definition": "Shifting focus plane between subjects",
+    "aliases": [
+      "focus pull"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "camera"
+        ],
+        "meaning": "Shifting focus plane between subjects",
+        "motionHints": [
+          "depth-of-field focus interpolation"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "camera.depth-of-field",
+    "revision": 1,
+    "term": "depth-of-field",
+    "domain": "camera",
+    "definition": "Range of apparent focus in scene",
+    "aliases": [
+      "dof"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "camera"
+        ],
+        "meaning": "Range of apparent focus in scene",
+        "motionHints": [
+          "lens aperture/focus settings"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "composition.framing",
+    "revision": 1,
+    "term": "framing",
+    "domain": "composition",
+    "definition": "Placement and scale of subjects within viewport",
+    "aliases": [
+      "composition"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "composition"
+        ],
+        "meaning": "Placement and scale of subjects within viewport",
+        "motionHints": [
+          "camera target and bounds"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "composition.blocking",
+    "revision": 1,
+    "term": "blocking",
+    "domain": "composition",
+    "definition": "Planned subject and camera positions over a scene",
+    "aliases": [
+      "positions"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "composition"
+        ],
+        "meaning": "Planned subject and camera positions over a scene",
+        "motionHints": [
+          "state-based poses"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "direction.reveal",
+    "revision": 1,
+    "term": "reveal",
+    "domain": "direction",
+    "definition": "Progressive appearance of a subject or information",
+    "aliases": [
+      "unveil"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "direction"
+        ],
+        "meaning": "Progressive appearance of a subject or information",
+        "motionHints": [
+          "opacity or mask progression"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.hold",
+    "revision": 1,
+    "term": "hold",
+    "domain": "timing",
+    "definition": "Intentional stillness to give action meaning",
+    "aliases": [
+      "pause",
+      "beat"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Intentional stillness to give action meaning",
+        "motionHints": [
+          "constant keyframe interval"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "motion.settle",
+    "revision": 1,
+    "term": "settle",
+    "domain": "motion",
+    "definition": "Final damping into a stable pose",
+    "aliases": [
+      "land"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "motion"
+        ],
+        "meaning": "Final damping into a stable pose",
+        "motionHints": [
+          "deceleration without jerk"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.stagger",
+    "revision": 1,
+    "term": "stagger",
+    "domain": "timing",
+    "definition": "Offset starts of related animations",
+    "aliases": [
+      "cascade"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Offset starts of related animations",
+        "motionHints": [
+          "sequenced start delays"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  },
+  {
+    "id": "timing.loop",
+    "revision": 1,
+    "term": "loop",
+    "domain": "timing",
+    "definition": "Repeated bounded animation cycle",
+    "aliases": [
+      "repeat"
+    ],
+    "interpretations": [
+      {
+        "id": "default",
+        "context": [
+          "timing"
+        ],
+        "meaning": "Repeated bounded animation cycle",
+        "motionHints": [
+          "repeatable periodic track"
+        ]
+      }
+    ],
+    "provenance": {
+      "source": "project",
+      "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
+    },
+    "status": "proposed"
+  }
+]
