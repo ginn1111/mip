@@ -7,7 +7,7 @@ import {ArtifactStore,artifactDigest} from '../packages/artifacts/index.mjs';
 import {validateGate} from '../packages/gates/index.mjs';
 
 function intent(){return {protocol:'mip/0.7',id:'i1',projectId:'scorpio',kind:'intent-profile',revision:1,lifecycle:'draft',dependencies:[],payload:{scene:'scorpio',goal:'cinematic',constraints:[]},evidence:[],approvals:[]};}
-function locked(a){const digest=artifactDigest(a);return {...a,lifecycle:'locked',approvals:[{actor:{id:'user',role:'human'},decision:'approved',reviewedDigest:digest,timestamp:'2026-10-13T10:00:00Z'}],lock:{digest,timestamp:'2026-10-13T10:00:00Z',dependencyDigests:[]}};}
+function locked(a){const digest=artifactDigest(a);return {...a,lifecycle:'locked',approvals:[{actor:{id:'user',role:'human'},decision:'approved',reviewedDigest:digest,timestamp:'2026-10-13T10:00:00Z'}],lock:{digest,timestamp:'2026-10-13T10:00:00Z',dependencyDigests:(a.dependencies??[]).map(x=>x.digest)}};}
 test('create, retrieve, revise, history and immutability',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'mip-'));
  try{
