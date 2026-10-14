@@ -1,4 +1,5 @@
 import {artifactDigest} from '../artifacts/index.mjs';
+import {reviewComplete} from '../prototype/review-rules.mjs';
 
 const REQUIREMENTS={
  semantic:['intent-profile'],
@@ -7,8 +8,10 @@ const REQUIREMENTS={
  verification:['intent-profile','semantic-contract','prototype-spec','prototype-review','implementation-contract'],
  complete:['verification-record']
 };
+const CREATIVE=['prototype-spec','prototype-review'];
+const humanApproval=a=>a.approvals?.find(x=>x.decision==='approved'&&x.actor?.role==='human');
 
-export async function validateGate(phase,inputs,loadRef){
+export async function validateGate(phase,inputs,loadRef,{verifyApproval}={}){
  const violations=[],required=REQUIREMENTS[phase];
  if(!required)throw new Error('Unknown phase');
  for(const kind of required)if(!inputs.some(a=>a.kind===kind))violations.push({code:'MISSING_REQUIRED',kind});
@@ -24,8 +27,10 @@ export async function validateGate(phase,inputs,loadRef){
   if(a.lock?.digest!==hash)violations.push({code:'DIGEST_MISMATCH',artifact:key});
   if(a.lock && JSON.stringify(a.lock.dependencyDigests)!==JSON.stringify((a.dependencies??[]).map(x=>x.digest)))
    violations.push({code:'LOCK_DEPENDENCY_MISMATCH',artifact:key});
-  if(!a.approvals?.some(x=>x.decision==='approved'&&x.actor?.role==='human'&&x.reviewedDigest===hash))
-   violations.push({code:'MISSING_HUMAN_APPROVAL',artifact:key});
+  const approval=a.approvals?.find(x=>x.decision==='approved'&&x.actor?.role==='human'&&x.reviewedDigest===hash);
+  if(!approval)violations.push({code:'MISSING_HUMAN_APPROVAL',artifact:key});
+  else if(CREATIVE.includes(a.kind)&&(!verifyApproval||!await verifyApproval(approval)))
+   violations.push({code:'UNVERIFIED_HUMAN_APPROVAL',artifact:key});
   if(a.kind==='semantic-contract'&&a.payload.blockingAmbiguities?.length)violations.push({code:'UNRESOLVED_AMBIGUITY',artifact:key});
   for(const ref of a.dependencies??[]){
    let dep;
@@ -38,5 +43,30 @@ export async function validateGate(phase,inputs,loadRef){
   finished.add(key);
  }
  for(const a of inputs)await check(a);
+ if(['implementation','verification'].includes(phase))checkPrototypeEvidence(inputs,violations);
  return {status:violations.length?'BLOCKED':'PASS',phase,violations};
+}
+
+/** Every prototype-spec needs exactly one matching, complete, same-reviewer prototype-review. */
+function checkPrototypeEvidence(inputs,violations){
+ const prototypes=inputs.filter(a=>a.kind==='prototype-spec'),reviews=inputs.filter(a=>a.kind==='prototype-review');
+ const key=a=>a.id+'@'+a.revision,refOf=r=>r.payload?.prototypeRef;
+ for(const prototype of prototypes){
+  const matches=reviews.filter(r=>refOf(r)?.id===prototype.id&&refOf(r)?.revision===prototype.revision);
+  if(matches.length===0){violations.push({code:'MISSING_PROTOTYPE_REVIEW',artifact:key(prototype)});continue;}
+  if(matches.length>1)violations.push({code:'DUPLICATE_PROTOTYPE_REVIEW',artifact:key(prototype)});
+  for(const review of matches){
+   const at=key(review);
+   if(refOf(review).digest!==artifactDigest(prototype))violations.push({code:'PROTOTYPE_REVIEW_MISMATCH',artifact:at});
+   if(review.projectId!==prototype.projectId)violations.push({code:'PROJECT_MISMATCH',artifact:at});
+   if(review.payload?.decision!=='approved'||!reviewComplete(prototype.payload,review.payload?.scenarioReviews))
+    violations.push({code:'INCOMPLETE_PROTOTYPE_REVIEW',artifact:at});
+   const reviewer=review.payload?.reviewer?.id;
+   if(!reviewer||humanApproval(review)?.actor.id!==reviewer||humanApproval(prototype)?.actor.id!==reviewer)
+    violations.push({code:'REVIEWER_MISMATCH',artifact:at});
+  }
+ }
+ for(const review of reviews)
+  if(!prototypes.some(p=>p.id===refOf(review)?.id&&p.revision===refOf(review)?.revision))
+   violations.push({code:'PROTOTYPE_REVIEW_MISMATCH',artifact:key(review)});
 }
