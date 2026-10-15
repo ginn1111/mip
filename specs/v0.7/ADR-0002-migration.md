@@ -31,6 +31,6 @@ Artifacts carry `protocol` (today `mip/0.7`) and are hashed over their immutable
 
 ## Follow-up
 
-- Enforce ADR-0001's rejection of `NaN`, `Infinity` and `undefined` in digested content. At the time of writing, `digest()` accepts them (see `tests/vectors.test.mjs`, V5 finding).
+- Duplicate-key detection needs a duplicate-rejecting JSON parser at read boundaries; `digest()` cannot see duplicates after `JSON.parse` (TBD, owner: project owner).
 - Decide whether mixed-protocol graphs ever need an allowance (TBD, owner: project owner).
 - Reconcile the protocol identifier: Linear RFC 0003 says `mip/0.5` (draft v0.6), the repository and ADR-0001 say `mip/0.7`. This ADR uses `mip/0.7` (TBD, owner: project owner).

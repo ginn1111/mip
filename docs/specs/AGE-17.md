@@ -30,7 +30,7 @@ ADR-0001 has one canonicalization vector and a five-line version policy. There i
 
 ## Constraints
 
-- Do not change digest semantics or the immutable field set. If V4 or V5 fails on current code, stop and report instead of fixing silently.
+- Do not change the immutable field set. V5 exposed that `digest()` accepted values ADR-0001 forbids; on the user's instruction it now rejects them (a digest-semantics change for invalid input only; valid JSON digests are unchanged).
 - ADR-0002 states policy only. No migration tool.
 
 ## Acceptance criteria
@@ -41,7 +41,7 @@ ADR-0001 has one canonicalization vector and a five-line version policy. There i
 - [ ] `npm test` passes.
 
 ## Edge cases
-- V5: if the current `digest` accepts `NaN`, that is a finding. Report it on the card, do not widen scope.
+- V5: `digest` used to accept `NaN`; fixed. Duplicate keys remain undetectable after `JSON.parse`.
 - Unicode normalization: JCS does not normalize; the ADR must say so.
 
 ## Open (TBD)
