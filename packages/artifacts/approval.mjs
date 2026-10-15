@@ -2,7 +2,7 @@ import {mkdir,open,readFile,rm} from 'node:fs/promises';
 import {createHmac,timingSafeEqual} from 'node:crypto';
 import {join} from 'node:path';
 import {canonicalize} from 'json-canonicalize';
-import {artifactDigest} from './index.mjs';
+import {artifactDigest,parseStrictJson} from './index.mjs';
 
 const equal=(a,b)=>Array.isArray(a)&&a.length===b.length&&a.every((v,i)=>v===b[i]);
 const creative=artifact=>['prototype-spec','prototype-review'].includes(artifact.kind);
@@ -44,7 +44,7 @@ export class ApprovalService {
  }
  async sealed(id,revision){
   const artifact=await this.store.read(id,revision);
-  const record=JSON.parse(await readFile(this.sidecar(id,revision),'utf8'));
+  const record=parseStrictJson(await readFile(this.sidecar(id,revision),'utf8'));
   const contentDigest=artifactDigest(artifact);
   if(!record?.lock||!record.approval||record.lock.digest!==contentDigest||record.approval.reviewedDigest!==contentDigest||
      record.lock.timestamp!==record.approval.timestamp||
