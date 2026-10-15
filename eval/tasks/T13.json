@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T13",
+  "group": "interactive",
+  "scene": "scorpio",
+  "prompt": "On hover the globe tilts toward the cursor; moving away interrupts and eases back."
+}

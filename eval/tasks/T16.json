@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T16",
+  "group": "interactive",
+  "scene": "scorpio",
+  "prompt": "Drag rotates the globe with follow-through on release; a tap during follow-through stops it."
+}

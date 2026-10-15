@@ -1,0 +1,39 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T04",
+  "intents": [
+    {
+      "id": "fade",
+      "critical": true,
+      "keywords": [
+        "fade"
+      ]
+    },
+    {
+      "id": "easing",
+      "critical": false,
+      "keywords": [
+        "ease-out"
+      ]
+    },
+    {
+      "id": "no-overshoot",
+      "critical": true,
+      "keywords": [
+        "no overshoot",
+        "without overshoot"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "ease-out",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "overshoot",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

@@ -1,0 +1,47 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T08",
+  "intents": [
+    {
+      "id": "weighty",
+      "critical": true,
+      "keywords": [
+        "weighty",
+        "weight"
+      ]
+    },
+    {
+      "id": "settle",
+      "critical": true,
+      "keywords": [
+        "settle"
+      ]
+    },
+    {
+      "id": "magnetic",
+      "critical": true,
+      "keywords": [
+        "magnetic",
+        "focal",
+        "attraction"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "weighty",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "settle",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "magnetic",
+      "classification": "ambiguous"
+    }
+  ],
+  "criticalAmbiguities": [
+    "magnetic"
+  ]
+}

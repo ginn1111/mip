@@ -1,0 +1,37 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T13",
+  "intents": [
+    {
+      "id": "hover",
+      "critical": true,
+      "keywords": [
+        "hover"
+      ]
+    },
+    {
+      "id": "interrupt",
+      "critical": true,
+      "keywords": [
+        "interrupt",
+        "cancel"
+      ]
+    },
+    {
+      "id": "ease-back",
+      "critical": true,
+      "keywords": [
+        "ease back",
+        "ease-out",
+        "return"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "ease-out",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

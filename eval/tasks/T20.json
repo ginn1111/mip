@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T20",
+  "group": "conflicting-intents",
+  "scene": "scorpio",
+  "prompt": "Use no easing, and apply ease-in-out to the same camera move."
+}

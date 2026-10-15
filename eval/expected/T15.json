@@ -1,0 +1,40 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T15",
+  "intents": [
+    {
+      "id": "scrub",
+      "critical": true,
+      "keywords": [
+        "scrub",
+        "timeline"
+      ]
+    },
+    {
+      "id": "pause-hold",
+      "critical": true,
+      "keywords": [
+        "pause",
+        "hold"
+      ]
+    },
+    {
+      "id": "reveal",
+      "critical": false,
+      "keywords": [
+        "reveal"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "reveal",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "hold",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T14",
+  "group": "interactive",
+  "scene": "scorpio",
+  "prompt": "A click starts the spin; a second click mid-spin must settle it smoothly, never snap."
+}

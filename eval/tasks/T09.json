@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T09",
+  "group": "multistage",
+  "scene": "scorpio",
+  "prompt": "Stage 1: anticipation wind-up. Stage 2: spin with follow-through. Stage 3: settle and hold 500 ms."
+}

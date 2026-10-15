@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T04",
+  "group": "explicit-motion",
+  "scene": "scorpio",
+  "prompt": "Fade the label in with ease-out over 400 ms, no overshoot."
+}

@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T02",
+  "group": "explicit-motion",
+  "scene": "scorpio",
+  "prompt": "Dolly-in on the star cluster for 1.5 seconds, then hold for 1 second."
+}

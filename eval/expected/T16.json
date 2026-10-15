@@ -1,0 +1,35 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T16",
+  "intents": [
+    {
+      "id": "drag",
+      "critical": true,
+      "keywords": [
+        "drag"
+      ]
+    },
+    {
+      "id": "follow-through",
+      "critical": true,
+      "keywords": [
+        "follow-through"
+      ]
+    },
+    {
+      "id": "tap-stop",
+      "critical": true,
+      "keywords": [
+        "tap",
+        "stop"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "follow-through",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

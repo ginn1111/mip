@@ -1,0 +1,40 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T02",
+  "intents": [
+    {
+      "id": "dolly",
+      "critical": true,
+      "keywords": [
+        "dolly-in",
+        "dolly"
+      ]
+    },
+    {
+      "id": "hold",
+      "critical": true,
+      "keywords": [
+        "hold"
+      ]
+    },
+    {
+      "id": "timing",
+      "critical": false,
+      "keywords": [
+        "1.5 seconds",
+        "1500ms"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "dolly-in",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "hold",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

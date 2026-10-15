@@ -1,0 +1,37 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T17",
+  "intents": [
+    {
+      "id": "reveal",
+      "critical": true,
+      "keywords": [
+        "reveal"
+      ]
+    },
+    {
+      "id": "instant",
+      "critical": true,
+      "keywords": [
+        "instant"
+      ]
+    },
+    {
+      "id": "slow",
+      "critical": true,
+      "keywords": [
+        "slow",
+        "dramatic"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "reveal",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": [
+    "instant vs slow"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T19",
+  "intents": [
+    {
+      "id": "snappy",
+      "critical": true,
+      "keywords": [
+        "snappy",
+        "pop"
+      ]
+    },
+    {
+      "id": "weighty",
+      "critical": true,
+      "keywords": [
+        "weighty",
+        "heavy"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "snappy",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "weighty",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": [
+    "snappy vs weighty"
+  ]
+}

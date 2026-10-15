@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T12",
+  "group": "multistage",
+  "scene": "scorpio",
+  "prompt": "Squash-and-stretch on click, arc to the next sign, slow-in-slow-out arrival, snappy label."
+}

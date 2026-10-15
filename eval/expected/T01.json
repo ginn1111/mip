@@ -1,0 +1,38 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T01",
+  "intents": [
+    {
+      "id": "rotate",
+      "critical": true,
+      "keywords": [
+        "rotate",
+        "rotation",
+        "spin"
+      ]
+    },
+    {
+      "id": "duration",
+      "critical": true,
+      "keywords": [
+        "2 seconds",
+        "2s",
+        "2000ms"
+      ]
+    },
+    {
+      "id": "easing",
+      "critical": false,
+      "keywords": [
+        "ease-in-out"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "ease-in-out",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}
