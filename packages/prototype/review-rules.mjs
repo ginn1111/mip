@@ -5,6 +5,7 @@ const unique=a=>new Set(a).size===a.length;
 const sameSet=(a,b)=>unique(a)&&unique(b)&&a.length===b.length&&b.every(x=>a.includes(x));
 const text=v=>typeof v==='string'&&v.length>0;
 const exact=(o,keys)=>o!==null&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).length===keys.length&&keys.every(k=>k in o);
+const commentValid=c=>exact(c,['timeMs','text'])&&Number.isInteger(c.timeMs)&&c.timeMs>=0&&text(c.text);
 
 /** Non-empty, unique, time-valid plan in which every scenario has at least one segment. */
 export function planValid(spec){
@@ -22,12 +23,30 @@ export const requiredSegments=(spec,scenarioId)=>arr(spec.reviewSegments).filter
 export function reviewShapeValid(scenarioReviews){
  return Array.isArray(scenarioReviews)&&scenarioReviews.every(r=>exact(r,['scenarioId','accepted','segmentReviews'])&&text(r.scenarioId)&&
   typeof r.accepted==='boolean'&&Array.isArray(r.segmentReviews)&&r.segmentReviews.every(s=>exact(s,['segmentId','accepted','comments'])&&
-   text(s.segmentId)&&typeof s.accepted==='boolean'&&Array.isArray(s.comments)&&s.comments.every(c=>typeof c==='string')));
+   text(s.segmentId)&&typeof s.accepted==='boolean'&&Array.isArray(s.comments)&&s.comments.every(commentValid)));
+}
+
+/**
+ * Safe to persist as a (possibly partial) draft: every id exists exactly once and every
+ * comment instant lies inside its segment's time range.
+ */
+export function reviewConsistent(spec,scenarioReviews){
+ if(!planValid(spec)||!reviewShapeValid(scenarioReviews))return false;
+ const scenarioIds=scenarioReviews.map(r=>r.scenarioId);
+ if(!unique(scenarioIds)||!scenarioIds.every(id=>spec.scenarios.some(s=>s.id===id)))return false;
+ return scenarioReviews.every(r=>{
+  const allowed=requiredSegments(spec,r.scenarioId),ids=r.segmentReviews.map(s=>s.segmentId);
+  if(!unique(ids)||!ids.every(id=>allowed.includes(id)))return false;
+  return r.segmentReviews.every(s=>{
+   const segment=spec.reviewSegments.find(x=>x.id===s.segmentId);
+   return s.comments.every(c=>c.timeMs>=segment.startMs&&c.timeMs<=segment.endMs);
+  });
+ });
 }
 
 /** Every scenario and every required segment is present exactly once and accepted. */
 export function reviewComplete(spec,scenarioReviews){
- if(!planValid(spec)||!reviewShapeValid(scenarioReviews))return false;
+ if(!reviewConsistent(spec,scenarioReviews))return false;
  if(!sameSet(scenarioReviews.map(r=>r.scenarioId),spec.scenarios.map(s=>s.id)))return false;
  return scenarioReviews.every(r=>r.accepted&&sameSet(r.segmentReviews.map(s=>s.segmentId),requiredSegments(spec,r.scenarioId))&&r.segmentReviews.every(s=>s.accepted));
 }

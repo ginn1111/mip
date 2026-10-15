@@ -15,7 +15,7 @@ const spec=()=>({protocol:'mip/0.7',id:'scorpio-prototype',projectId:'scorpio',k
    {id:'reveal',startMs:800,endMs:4500,scenarioIds:['select-scorpio']}],
  },evidence:[],approvals:[]});
 const completeReviews=()=>[{scenarioId:'select-scorpio',accepted:true,segmentReviews:[
- {segmentId:'anticipation',accepted:true,comments:[]},{segmentId:'reveal',accepted:true,comments:['Timing approved']}]}];
+ {segmentId:'anticipation',accepted:true,comments:[]},{segmentId:'reveal',accepted:true,comments:[{timeMs:2000,text:'Timing approved'}]}]}];
 
 async function setup(fn){
  const directory=await mkdtemp(join(tmpdir(),'mip-review-'));

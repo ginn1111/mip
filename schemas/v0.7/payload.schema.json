@@ -416,7 +416,22 @@
                         "comments": {
                           "type": "array",
                           "items": {
-                            "type": "string"
+                            "type": "object",
+                            "required": [
+                              "timeMs",
+                              "text"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                              "timeMs": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "text": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
                           }
                         }
                       }
