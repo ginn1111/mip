@@ -45,23 +45,39 @@ export async function createReviewerServer({directory,approvalSecret,reviewToken
   typeof principal==='string'&&sameToken(principal,reviewToken)?{id:reviewerId,role:'human'}:null});
  const approval=new ApprovalService(store,{...authenticator,loadDependency:ref=>approval.sealed(ref.id,ref.revision)});
  const reviews=new PrototypeReviewService(store,{approvalService:approval});
+ /** Bearer token if it matches the host secret, else null. */
+ const principalOf=req=>{const m=/^Bearer (.+)$/.exec(req.headers.authorization??'');return m&&sameToken(m[1],reviewToken)?m[1]:null;};
  return createServer(async(req,res)=>{
   try{
    if(!HOSTS.test(req.headers.host??'')){json(res,403,{error:'Forbidden host'});return;}
+   if(!req.url.startsWith('/')||req.url.startsWith('//')){json(res,400,{error:'Bad request'});return;}
    const pathname=new URL(req.url,'http://localhost').pathname;
    if(req.method==='GET'&&pathname==='/api/prototype'){
     const current=await store.read(bundled.id,bundled.revision);
     json(res,200,{ref:{id:current.id,revision:current.revision,digest:artifactDigest(current)},reviewSegments:current.payload.reviewSegments,scenarios:current.payload.scenarios.map(x=>x.id)});return;
    }
    if(req.method==='POST'&&pathname==='/api/reviews'){
-    const match=/^Bearer (.+)$/.exec(req.headers.authorization??'');
-    if(!match||!sameToken(match[1],reviewToken)){json(res,401,{error:'Verified human identity required'});return;}
+    const principal=principalOf(req);
+    if(principal===null){json(res,401,{error:'Verified human identity required'});return;}
     const request=await body(req);
-    const result=await reviews.approve({id:'scorpio-prototype-review',projectId:'scorpio',revision:1,principal:match[1],
-     prototypeRef:request?.prototypeRef,decision:request?.decision,scenarioReviews:request?.scenarioReviews});
+    // Only the reviewer's saved draft is approvable; any scenarioReviews in the body are ignored.
+    const result=await reviews.approveDraft({id:'scorpio-prototype-review',projectId:'scorpio',revision:1,principal,
+     prototypeRef:request?.prototypeRef,decision:request?.decision});
     json(res,201,result);return;
    }
+   if(pathname==='/api/draft'&&(req.method==='GET'||req.method==='PUT')){
+    const principal=principalOf(req);
+    if(principal===null){json(res,401,{error:'Verified human identity required'});return;}
+    if(req.method==='GET'){
+     const q=new URL(req.url,'http://localhost').searchParams;
+     const prototypeRef={id:q.get('id'),revision:Number(q.get('revision')),digest:q.get('digest')};
+     json(res,200,{draft:await reviews.loadDraft({principal,prototypeRef})});return;
+    }
+    const request=await body(req);
+    json(res,200,{draft:await reviews.saveDraft({principal,prototypeRef:request?.prototypeRef,status:request?.status,scenarioReviews:request?.scenarioReviews,baseSavedAt:request?.baseSavedAt})});return;
+   }
    const asset=req.method==='GET'?ASSETS[pathname]:undefined;
+   if(req.method==='GET'&&pathname==='/favicon.ico'){res.writeHead(204);res.end();return;}
    if(!asset){json(res,req.method==='GET'?404:405,{error:req.method==='GET'?'Not found':'Method not allowed'});return;}
    res.writeHead(200,{'Content-Type':asset[1],'X-Content-Type-Options':'nosniff'});res.end(await readFile(resolve(root,asset[0])));
   }catch(error){

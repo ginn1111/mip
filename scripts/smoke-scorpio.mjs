@@ -19,19 +19,34 @@ try{
  for(const p of ['/package.json','/packages/artifacts/approval.mjs','/.mip/reviews/x.json'])log('leak probe '+p,(await fetch(B+p)).status);
  log('bad Host',await new Promise(r=>import('node:http').then(h=>h.request({host:'127.0.0.1',port:4391,headers:{Host:'evil.example'}},x=>{x.resume();r(x.statusCode);}).end())));
  const proto=await (await fetch(B+'/api/prototype')).json();log('prototype ref',proto.ref.id+'@'+proto.ref.revision+' '+proto.ref.digest.slice(0,19)+'…');
- const seg=ids=>[{scenarioId:'select-scorpio',accepted:true,segmentReviews:ids.map(segmentId=>({segmentId,accepted:true,comments:[]}))}];
- const post=(scenarioReviews,auth,ref=proto.ref)=>fetch(B+'/api/reviews',{method:'POST',headers:{'content-type':'application/json',...(auth?{authorization:auth}:{})},body:JSON.stringify({prototypeRef:ref,decision:'approved',scenarioReviews})});
+ const seg=ids=>[{scenarioId:'select-scorpio',accepted:true,segmentReviews:ids.map(segmentId=>({segmentId,accepted:true,comments:segmentId==='rotation'?[{timeMs:1500,text:'smoke comment'}]:[]}))}];
+ const H=auth=>({'content-type':'application/json',...(auth?{authorization:auth}:{})});
+ let lastSaved=null;
+ const put=async(scenarioReviews,auth,ref=proto.ref,status='draft',baseSavedAt=lastSaved)=>{
+  const res=await fetch(B+'/api/draft',{method:'PUT',headers:H(auth),body:JSON.stringify({prototypeRef:ref,status,scenarioReviews,baseSavedAt})});
+  if(res.status===200){const j=await res.clone().json();lastSaved=j.draft.savedAt;}
+  return res;
+ };
+ const post=(auth,ref=proto.ref)=>fetch(B+'/api/reviews',{method:'POST',headers:H(auth),body:JSON.stringify({prototypeRef:ref,decision:'approved'})});
  const all=['anticipation','rotation','constellation'];
- log('no auth',(await post(seg(all))).status);
- log('raw token (no Bearer)',(await post(seg(all),'smoke-token')).status);
- log('wrong token',(await post(seg(all),'Bearer nope')).status);
- log('stale digest',(await post(seg(all),'Bearer smoke-token',{...proto.ref,digest:'sha256:'+'0'.repeat(64)})).status);
- log('incomplete segments',(await post(seg(['anticipation']),'Bearer smoke-token')).status);
- const ok=await post(seg(all),'Bearer smoke-token');const out=await ok.json();log('full approval',ok.status);
+ log('draft no auth',(await put(seg(all),null)).status);
+ log('draft raw token (no Bearer)',(await put(seg(all),'smoke-token')).status);
+ log('draft stale digest',(await put(seg(all),'Bearer smoke-token',{...proto.ref,digest:'sha256:'+'0'.repeat(64)})).status);
+ log('approve with no draft',(await post('Bearer smoke-token')).status);
+ log('save partial draft',(await put(seg(['anticipation']),'Bearer smoke-token')).status);
+ log('approve partial draft',(await post('Bearer smoke-token')).status);
+ log('stale baseSavedAt (lost update)',(await put(seg(all),'Bearer smoke-token',proto.ref,'draft',null)).status);
+ log('save changes_requested',(await put(seg(all),'Bearer smoke-token',proto.ref,'changes_requested')).status);
+ log('approve while changes requested',(await post('Bearer smoke-token')).status);
+ log('save complete draft',(await put(seg(all),'Bearer smoke-token')).status);
+ log('approve no auth',(await post(null)).status);
+ const ok=await post('Bearer smoke-token');const out=await ok.json();log('full approval',ok.status);
  assert.equal(ok.status,201);assert.equal(out.prototype.lifecycle,'locked');assert.equal(out.review.lifecycle,'locked');
+ assert.deepEqual(out.review.payload.scenarioReviews[0].segmentReviews[1].comments,[{timeMs:1500,text:'smoke comment'}]);
  log('review.prototypeRef == prototype lock',out.review.payload.prototypeRef.digest===out.prototype.lock.digest);
  log('reviewer / approvers',[out.review.payload.reviewer.id,out.prototype.approvals[0].actor.id,out.review.approvals[0].actor.id].join(' / '));
- log('replay',(await post(seg(all),'Bearer smoke-token')).status);
+ log('draft after lock',(await put(seg(all),'Bearer smoke-token')).status);
+ log('replay',(await post('Bearer smoke-token')).status);
  log('persisted files',(await readdir(join(dir,'store','scorpio-prototype'))).concat(await readdir(join(dir,'store','scorpio-prototype-review'))).sort().join(', '));
  // Gate against what is on disk, with an independent verifier instance sharing only the host secret.
  const store=new ArtifactStore(join(dir,'store'));

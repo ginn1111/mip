@@ -7,10 +7,14 @@ import {createReviewerServer} from '../examples/scorpio/serve.mjs';
 
 const reviews=[{scenarioId:'select-scorpio',accepted:true,segmentReviews:[
  {segmentId:'anticipation',accepted:true,comments:[]},
- {segmentId:'rotation',accepted:true,comments:['Motion approved']},
+ {segmentId:'rotation',accepted:true,comments:[{timeMs:1000,text:'Motion approved'}]},
  {segmentId:'constellation',accepted:true,comments:[]},
 ]}];
 
+const H={'content-type':'application/json',authorization:'Bearer session-token'};
+const baseOf=async(base,ref)=>(await (await fetch(base+'/api/draft?'+new URLSearchParams({id:ref.id,revision:String(ref.revision),digest:ref.digest}),{headers:H})).json().catch(()=>null))?.draft?.savedAt??null;
+const saveDraft=async(base,ref,scenarioReviews=reviews,status='draft')=>fetch(base+'/api/draft',{method:'PUT',headers:H,body:JSON.stringify({prototypeRef:ref,status,scenarioReviews,baseSavedAt:await baseOf(base,ref)})});
+const approve=(base,ref,headers=H)=>fetch(base+'/api/reviews',{method:'POST',headers,body:JSON.stringify({prototypeRef:ref,decision:'approved'})});
 async function withServer(fn){
  const directory=await mkdtemp(join(tmpdir(),'mip-reviewer-'));
  const server=await createReviewerServer({directory,approvalSecret:'secret',reviewToken:'session-token',reviewerId:'designer-1'});
@@ -31,19 +35,21 @@ test('Scorpio reviewer serves UI and exact prototype reference',()=>withServer(a
 
 test('review API rejects unauthorized, stale and incomplete approval',()=>withServer(async({base})=>{
  const prototype=await (await fetch(base+'/api/prototype')).json();
- const unauthorized=await fetch(base+'/api/reviews',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({prototypeRef:prototype.ref,decision:'approved',scenarioReviews:reviews})});
- assert.equal(unauthorized.status,401);
- const stale=await fetch(base+'/api/reviews',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer session-token'},body:JSON.stringify({prototypeRef:{...prototype.ref,digest:'sha256:'+'0'.repeat(64)},decision:'approved',scenarioReviews:reviews})});
+ assert.equal((await saveDraft(base,prototype.ref)).status,200);
+ assert.equal((await approve(base,prototype.ref,{'content-type':'application/json'})).status,401);
+ const stale=await approve(base,{...prototype.ref,digest:'sha256:'+'0'.repeat(64)});
  assert.equal(stale.status,400);
  assert.match((await stale.json()).error,/Stale prototype/);
- const incomplete=await fetch(base+'/api/reviews',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer session-token'},body:JSON.stringify({prototypeRef:prototype.ref,decision:'approved',scenarioReviews:[{...reviews[0],segmentReviews:reviews[0].segmentReviews.slice(0,1)}]})});
+ await saveDraft(base,prototype.ref,[{...reviews[0],segmentReviews:reviews[0].segmentReviews.slice(0,1)}]);
+ const incomplete=await approve(base,prototype.ref);
  assert.equal(incomplete.status,400);
  assert.match((await incomplete.json()).error,/Incomplete prototype review/);
 }));
 
 test('review API persists host-verified creative locks',()=>withServer(async({base,directory})=>{
  const prototype=await (await fetch(base+'/api/prototype')).json();
- const response=await fetch(base+'/api/reviews',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer session-token'},body:JSON.stringify({prototypeRef:prototype.ref,decision:'approved',scenarioReviews:reviews})});
+ await saveDraft(base,prototype.ref);
+ const response=await approve(base,prototype.ref);
  assert.equal(response.status,201);
  const result=await response.json();
  assert.equal(result.prototype.lifecycle,'locked');

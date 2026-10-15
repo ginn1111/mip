@@ -17,6 +17,8 @@ async function withServer(fn){
  try{await fn({base:'http://127.0.0.1:'+server.address().port,port:server.address().port,directory});}
  finally{await new Promise(r=>server.close(r));await rm(directory,{recursive:true,force:true});}
 }
+const H={'content-type':'application/json',authorization:'Bearer session-token'};
+const draft=(base,ref,scenarioReviews=reviews)=>fetch(base+'/api/draft',{method:'PUT',headers:H,body:JSON.stringify({prototypeRef:ref,status:'draft',scenarioReviews,baseSavedAt:null})});
 const post=(base,body,auth='Bearer session-token')=>fetch(base+'/api/reviews',{method:'POST',headers:{'content-type':'application/json',...(auth?{authorization:auth}:{})},body:typeof body==='string'?body:JSON.stringify(body)});
 const protoRef=async base=>(await (await fetch(base+'/api/prototype')).json()).ref;
 
@@ -28,6 +30,11 @@ test('every script the page references resolves to a served asset',()=>withServe
   const res=await fetch(new URL(src,base+'/'));
   assert.equal(res.status,200,src);
  }
+}));
+
+test('favicon requests are answered quietly without exposing anything else',()=>withServer(async({base})=>{
+ assert.equal((await fetch(base+'/favicon.ico')).status,204);
+ assert.equal((await fetch(base+'/favicon.png')).status,404);
 }));
 
 test('static handler serves only reviewer UI assets',()=>withServer(async({base})=>{
@@ -46,20 +53,22 @@ test('rejects foreign Host header (DNS rebinding)',()=>withServer(async({port})=
 }));
 
 test('requires Bearer scheme',()=>withServer(async({base})=>{
- assert.equal((await post(base,{prototypeRef:await protoRef(base),decision:'approved',scenarioReviews:reviews},'session-token')).status,401);
+ const ref=await protoRef(base);
+ assert.equal((await post(base,{prototypeRef:ref,decision:'approved'},'session-token')).status,401);
+ assert.equal((await fetch(base+'/api/draft',{method:'PUT',headers:{'content-type':'application/json',authorization:'session-token'},body:'{}'})).status,401);
 }));
 
 test('malformed or unvalidated bodies return 400 without leaking details',()=>withServer(async({base})=>{
  const ref=await protoRef(base);
  assert.equal((await post(base,'{not json')).status,400);
- assert.equal((await post(base,{decision:'approved',scenarioReviews:reviews})).status,400);
+ assert.equal((await post(base,{decision:'approved'})).status,400);
  const evil=structuredClone(reviews);evil[0].EVIL=1;
- const res=await post(base,{prototypeRef:ref,decision:'approved',scenarioReviews:evil});
- assert.equal(res.status,400);
+ assert.equal((await draft(base,ref,evil)).status,400);
 }));
 
 test('second approval returns clean 409 and leaves lock intact',()=>withServer(async({base})=>{
- const ref=await protoRef(base),body={prototypeRef:ref,decision:'approved',scenarioReviews:reviews};
+ const ref=await protoRef(base),body={prototypeRef:ref,decision:'approved'};
+ await draft(base,ref);
  assert.equal((await post(base,body)).status,201);
  const again=await post(base,body);
  assert.equal(again.status,409);
