@@ -5,7 +5,21 @@ import {canonicalize} from 'json-canonicalize';
 
 const IMMUTABLE=['protocol','id','projectId','kind','revision','dependencies','payload','evidence'];
 export const immutableContent=a=>Object.fromEntries(IMMUTABLE.map(k=>[k,a[k]]));
-export const digest=value=>'sha256:'+createHash('sha256').update(canonicalize(value),'utf8').digest('hex');
+/** ADR-0001: only plain JSON may be digested. Without this, NaN/Infinity hash like null and undefined like a missing key. */
+function assertJson(value,path='$',seen=new Set()){
+ const bad=why=>{throw new TypeError(`Unsupported JSON value at ${path}: ${why}`);};
+ if(value===null||typeof value==='string'||typeof value==='boolean')return;
+ if(typeof value==='number'){if(!Number.isFinite(value))bad(String(value));return;}
+ if(typeof value!=='object')bad(typeof value);
+ if(seen.has(value))bad('cycle');
+ const proto=Object.getPrototypeOf(value);
+ if(!Array.isArray(value)&&proto!==Object.prototype&&proto!==null)bad(proto?.constructor?.name??'object');
+ seen.add(value);
+ if(Array.isArray(value))value.forEach((v,i)=>assertJson(v,`${path}[${i}]`,seen));
+ else for(const [k,v] of Object.entries(value))assertJson(v,`${path}.${k}`,seen);
+ seen.delete(value);
+}
+export const digest=value=>{assertJson(value);return 'sha256:'+createHash('sha256').update(canonicalize(value),'utf8').digest('hex');};
 export const artifactDigest=a=>digest(immutableContent(a));
 
 export class ArtifactStore {
