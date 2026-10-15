@@ -17,7 +17,7 @@ Linear: AGE-18. Authority: RFC 0002 (Linear document) entry contract. Done per L
 - **B1 Examples.** Each seed entry gains `examples`: an array with at least one item `{phrase, intent, manifestation}`, all non-empty strings. `phrase` contains the entry's term or an alias, so it is findable by `resolve`.
 - **B2 Schema.** `glossary.schema.json` accepts an optional `examples` array with that item shape (`additionalProperties: false`). It stays optional so project-level entries without examples remain valid.
 - **B3 Seed rule.** A test requires every core seed entry to have at least one valid example.
-- **B4 Governance.** New `glossary/GOVERNANCE.md` states: status lifecycle `proposed`, `approved`, `deprecated`; who may approve (TBD below); a content change bumps `revision`; ids never change; deprecated entries stay resolvable but flagged; project entries specialize core entries and never overwrite them (RFC 0002 precedence).
+- **B4 Governance.** New `glossary/GOVERNANCE.md` states: status lifecycle `proposed`, `approved`, `deprecated`; approval only from a direct human requirement or an official source found by an agent (decided by the project owner, 2026-10-15); a content change bumps `revision`; ids never change; deprecated entries stay resolvable but flagged; project entries specialize core entries and never overwrite them (RFC 0002 precedence).
 - **B5 Status unchanged.** All 30 entries stay `proposed`. Examples do not approve anything.
 
 ## Inputs / outputs
@@ -42,7 +42,3 @@ Linear: AGE-18. Authority: RFC 0002 (Linear document) entry contract. Done per L
 ## Edge cases
 - Multi-word terms and aliases: the phrase check uses the same word-boundary match as `resolve`.
 - `magnetic` stays ambiguous after the change.
-
-## Open (TBD)
-- Who approves entries (owner, role or process). Owner: user. GOVERNANCE.md says `TBD: approver` until decided.
-- Whether examples need human review before the seed is marked `approved`. Owner: user.

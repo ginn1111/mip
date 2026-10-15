@@ -20,7 +20,7 @@ test('seed governance unchanged by examples: 30 entries, all proposed, magnetic 
  assert.equal(g.length,30);assert.ok(g.every(e=>e.status==='proposed'&&e.provenance.source==='project'));
  assert.deepEqual(extractIntent('Make it magnetic').blockingAmbiguities,['magnetic']);
 });
-test('governance document exists and covers lifecycle, revision, ids, deprecation and precedence',()=>{
+test('governance document covers lifecycle, revision, ids, precedence and the two approval sources',()=>{
  const t=readFileSync('glossary/GOVERNANCE.md','utf8');
- for(const word of ['proposed','approved','deprecated','revision','id','specialize','TBD: approver'])assert.ok(t.includes(word),'GOVERNANCE.md must mention '+word);
+ for(const word of ['proposed','approved','deprecated','revision','id','specialize','Direct human requirement','Official source','never approves its own'])assert.ok(t.includes(word),'GOVERNANCE.md must mention '+word);
 });

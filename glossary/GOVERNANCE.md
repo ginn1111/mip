@@ -31,5 +31,11 @@ Examples and edits never change status by themselves. Only an explicit human dec
 
 ## Approval
 
-- Who may approve entries: TBD: approver (owner: project owner to decide).
-- Whether examples need human review before the seed is marked `approved`: TBD (owner: project owner).
+An entry moves to `approved` only when its meaning comes from one of two sources:
+
+1. **Direct human requirement.** A human states the meaning or approves the entry explicitly.
+2. **Official source.** An agent finds the meaning in an authoritative published reference (for example an established animation or cinematography text, a standards body, or a vendor's official documentation). The agent records the reference in `provenance.reference` with `provenance.source: standard`.
+
+The agent never invents a meaning and never approves its own proposal. When neither source exists, the entry stays `proposed`. The agent warns the human and leaves the decision to them.
+
+Examples follow the same rule: an agent-drafted example stays unreviewed until a human accepts it or it is traced to an official source.
