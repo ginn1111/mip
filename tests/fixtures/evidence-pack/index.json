@@ -1,0 +1,70 @@
+[
+ {
+  "file": "schema-missing-confidence.json",
+  "reason": "confidence required"
+ },
+ {
+  "file": "schema-confidence-range.json",
+  "reason": "confidence 0..1"
+ },
+ {
+  "file": "integrity-time-reversed.json",
+  "reason": "TIME_RANGE_REVERSED"
+ },
+ {
+  "file": "schema-bad-digest.json",
+  "reason": "digest pattern"
+ },
+ {
+  "file": "schema-unknown-kind.json",
+  "reason": "kind enum"
+ },
+ {
+  "file": "schema-unknown-class.json",
+  "reason": "class enum"
+ },
+ {
+  "file": "schema-extra-field.json",
+  "reason": "no claim of original code"
+ },
+ {
+  "file": "schema-env-key-missing.json",
+  "reason": "unknown env value must be null, not omitted"
+ },
+ {
+  "file": "schema-missing-method.json",
+  "reason": "method required"
+ },
+ {
+  "file": "schema-bad-protocol.json",
+  "reason": "protocol const"
+ },
+ {
+  "file": "integrity-unknown-source.json",
+  "reason": "UNKNOWN_SOURCE"
+ },
+ {
+  "file": "integrity-unknown-observation.json",
+  "reason": "UNKNOWN_OBSERVATION"
+ },
+ {
+  "file": "integrity-unknown-hypothesis.json",
+  "reason": "UNKNOWN_HYPOTHESIS"
+ },
+ {
+  "file": "integrity-duplicate-id.json",
+  "reason": "DUPLICATE_ID"
+ },
+ {
+  "file": "integrity-empty-binding.json",
+  "reason": "EMPTY_BINDING"
+ },
+ {
+  "file": "provenance-observed-only-hypothesis.json",
+  "reason": "PROVENANCE_MISMATCH"
+ },
+ {
+  "file": "provenance-inferred-no-hypothesis.json",
+  "reason": "PROVENANCE_MISMATCH"
+ }
+]

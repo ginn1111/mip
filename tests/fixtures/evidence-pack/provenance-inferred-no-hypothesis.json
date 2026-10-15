@@ -1,0 +1,117 @@
+{
+  "protocol": "mip/0.7",
+  "id": "scorpio-reference-pack",
+  "sources": [
+    {
+      "id": "src-video",
+      "kind": "video",
+      "uri": "fixture://scorpio-reference.mp4",
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "capturedAt": "2026-10-15T09:00:00Z",
+      "environment": {
+        "viewport": "1280x720",
+        "device": null,
+        "frameRate": 30
+      },
+      "licenseOrPermissionNotes": "Synthetic fixture. No third-party asset; redistribution rights not asserted."
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-1",
+      "sourceId": "src-video",
+      "timeRangeMs": [
+        0,
+        800
+      ],
+      "actorId": "globe",
+      "event": "hold",
+      "property": "rotation",
+      "measuredValue": 0,
+      "measurementMethod": "frame-sample",
+      "confidence": 0.9,
+      "evidenceRefs": [
+        {
+          "uri": "fixture://frame-0000.png",
+          "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "mediaType": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "obs-2",
+      "sourceId": "src-video",
+      "timeRangeMs": [
+        800,
+        3600
+      ],
+      "actorId": "globe",
+      "event": "rotate",
+      "property": "rotation",
+      "measuredValue": 1.2,
+      "measurementMethod": "frame-sample",
+      "confidence": 0.7,
+      "evidenceRefs": [
+        {
+          "uri": "fixture://frame-1500.png",
+          "digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "mediaType": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "obs-3",
+      "sourceId": "src-video",
+      "timeRangeMs": [
+        3600,
+        3600
+      ],
+      "actorId": "stars",
+      "event": "appear",
+      "property": "opacity",
+      "measuredValue": 1,
+      "measurementMethod": "frame-sample",
+      "confidence": 0.8,
+      "evidenceRefs": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "hyp-1",
+      "concept": "magnetic",
+      "proposedInterpretation": "focal pull toward the constellation",
+      "sourceObservationIds": [
+        "obs-2"
+      ],
+      "confidence": 0.5,
+      "alternatives": [
+        "camera attraction"
+      ],
+      "reviewStatus": "proposed"
+    }
+  ],
+  "bindings": [
+    {
+      "intentField": "goal",
+      "observationIds": [
+        "obs-3"
+      ],
+      "hypothesisIds": [],
+      "provenanceClass": "OBSERVED"
+    },
+    {
+      "intentField": "constraints.mood",
+      "observationIds": [
+        "obs-2"
+      ],
+      "hypothesisIds": [],
+      "provenanceClass": "INFERRED"
+    },
+    {
+      "intentField": "constraints.brand",
+      "observationIds": [],
+      "hypothesisIds": [],
+      "provenanceClass": "DECLARED"
+    }
+  ]
+}
