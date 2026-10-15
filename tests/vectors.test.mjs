@@ -37,22 +37,26 @@ test('V4: mutable governance fields do not change the artifact digest; immutable
 });
 
 // V5: ADR-0001 forbids undefined, NaN, infinity and unsupported JSON values in digested content.
-// FINDING (AGE-17): `digest` does not enforce this today. NaN and +/-Infinity serialize as null and
-// undefined serializes as a missing key, so each collides with another input. A function serializes to
-// the invalid text `{"a":undefined}` and is still hashed. These tests pin the CURRENT behavior so a fix
-// is a visible, deliberate change.
-// Fixing it is out of scope here (docs/specs/AGE-17.md Edge cases); tracked on the card.
-test('V5 finding: unsupported values are accepted today and collide with other inputs',()=>{
- const base=digest({a:null});
- assert.equal(digest({a:NaN}),base,'NaN digests like null');
- assert.equal(digest({a:Infinity}),base,'Infinity digests like null');
- assert.equal(digest({a:-Infinity}),base,'-Infinity digests like null');
- assert.equal(digest({a:undefined}),digest({}),'undefined digests like a missing key');
- assert.equal(canonicalize({a:()=>1}),'{"a":undefined}','a function serializes to invalid JSON text');
- assert.match(digest({a:()=>1}),/^sha256:[0-9a-f]{64}$/,'and is still hashed');
+// Before AGE-17 these collided with null or a missing key; digest() now rejects them.
+test('V5: unsupported values are rejected instead of colliding with other inputs',()=>{
+ for(const [name,value] of [['NaN',{a:NaN}],['Infinity',{a:Infinity}],['-Infinity',{a:-Infinity}],['undefined',{a:undefined}],
+  ['undefined in array',{a:[1,undefined]}],['function',{a:()=>1}],['symbol',{a:Symbol('s')}],['bigint',{a:1n}],
+  ['Date',{a:new Date(0)}],['Map',{a:new Map()}],['nested NaN',{a:{b:[{c:NaN}]}}],['top-level undefined',undefined]])
+  assert.throws(()=>digest(value),/Unsupported JSON value/,name);
+ const cyclic={};cyclic.self=cyclic;
+ assert.throws(()=>digest(cyclic),/Unsupported JSON value/,'cycle');
 });
-test('V5: BigInt is rejected today',()=>assert.throws(()=>digest({a:1n}),/BigInt/));
-test('V5 finding: duplicate keys are invisible once parsed (JSON.parse keeps the last)',()=>{
- assert.deepEqual(JSON.parse('{"a":1,"a":2}'),{a:2});
+test('V5: plain JSON values still digest, including null, nested arrays and a shared non-cyclic reference',()=>{
+ const shared={x:1};
+ for(const value of [null,true,0,-0.5,'',[],{},{a:null},{a:[1,'b',{c:false}]},{p:shared,q:shared}])
+  assert.match(digest(value),/^sha256:[0-9a-f]{64}$/);
+ assert.equal(digest({a:null}),'sha256:'+'d091f9c83c091f79652fe8786375b3fe4ce0861a56f5bfbafedbe431877ff0e8');
+});
+test('V5: artifactDigest rejects an artifact with an unsupported value',()=>{
+ assert.throws(()=>artifactDigest({...artifact,payload:{...artifact.payload,goal:NaN}}),/Unsupported JSON value/);
+});
+// Duplicate keys cannot be seen after JSON.parse (it keeps the last). Readers must not rely on
+// digest() to detect them; see ADR-0002 follow-up.
+test('V5 limitation: duplicate keys are invisible once parsed',()=>{
  assert.equal(digest(JSON.parse('{"a":1,"a":2}')),digest({a:2}));
 });
