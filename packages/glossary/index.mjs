@@ -7,7 +7,8 @@ const contains=(haystack,needle)=>{
  const words=normalize(haystack).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
  return words.some((_,i)=>tokens.every((t,j)=>words[i+j]===t));
 };
-export function resolve(text,{project=[],scene=[],domain=[]}={}){
+/** `candidates`: phrases the caller extracted. One that names no entry is `unknown`, never silently promoted (RFC 0002). */
+export function resolve(text,{project=[],scene=[],domain=[],candidates=[]}={}){
  const matches=[];
  for(const layer of [scene,project,domain,terms]){
   for(const entry of layer){
@@ -18,6 +19,9 @@ export function resolve(text,{project=[],scene=[],domain=[]}={}){
      interpretations:structuredClone(entry.interpretations),provenance:entry.provenance,approvalStatus:entry.status});
   }
  }
+ const known=new Set([...scene,...project,...domain,...terms].flatMap(e=>[e.term,...e.aliases].map(normalize)));
+ for(const c of new Set(candidates.map(c=>String(c).trim()).filter(Boolean)))
+  if(!known.has(normalize(c)))matches.push({term:c,status:'unknown',interpretations:[],provenance:null,approvalStatus:null});
  return matches;
 }
 export function extractIntent(text,options={}){
@@ -28,7 +32,7 @@ export function extractIntent(text,options={}){
 export function proposeSemanticContract(intent){
  return {concepts:intent.concepts.map(c=>({phrase:c.term,
    interpretation:c.status==='resolved'?(c.interpretations[0]?.meaning??''):'',
-   status:c.status,glossaryId:c.id})),blockingAmbiguities:intent.blockingAmbiguities};
+   status:c.status,...(c.id?{glossaryId:c.id}:{})})),blockingAmbiguities:intent.blockingAmbiguities};
 }
 export function reviewSemanticContract(contract,{decisions=[],actorId,reviewedDigest}={}){
  if(!actorId || !reviewedDigest) throw new Error('Authenticated human identity and reviewed artifact digest required');
