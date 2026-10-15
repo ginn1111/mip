@@ -158,3 +158,8 @@ test('preview serves the reviewer and approves nothing',()=>project(async cwd=>{
  assert.ok(files.every(f=>!f.endsWith('.lock')),files.join(','));
  await assertNoApprovalOrLock(cwd);
 }));
+
+test('a mip.config.json with a duplicate key is rejected (duplicate keys never allowed)',()=>project(async cwd=>{
+ await writeFile(join(cwd,'mip.config.json'),'{"protocol":"mip/0.7","projectId":"p","store":".mip/artifacts","store":"../outside"}');
+ const r=mip(['status'],{cwd});assert.equal(r.status,1);assert.ok(oneLine(r),r.stderr);assert.match(r.stderr,/Duplicate JSON key/);
+}));
