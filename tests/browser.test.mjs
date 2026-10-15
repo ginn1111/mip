@@ -1,67 +1,12 @@
-// Real-browser test of the Scorpio reviewer. Drives headless Chrome over CDP (Node's built-in WebSocket).
+// Real-browser test of the Scorpio reviewer, using the shared headless-Chrome/CDP harness.
 // Skips when no Chrome is installed; set CHROME_BIN to point at a specific binary.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {spawn,spawnSync} from 'node:child_process';
-import {mkdtemp,readFile,rm} from 'node:fs/promises';
-import {tmpdir} from 'node:os';
+import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {createReviewerServer} from '../examples/scorpio/serve.mjs';
+import {findChrome,withReviewer} from './browser-harness.mjs';
 
-const CANDIDATES=[process.env.CHROME_BIN,'google-chrome','google-chrome-stable','chromium','chromium-browser'].filter(Boolean);
-const chrome=CANDIDATES.find(bin=>spawnSync(bin,['--version'],{stdio:'ignore'}).status===0);
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function until(fn,what,ms=8000){
- const end=Date.now()+ms;let last;
- while(Date.now()<end){try{last=await fn();if(last)return last;}catch(e){last=e;}await sleep(50);}
- throw new Error('Timed out waiting for '+what+(last instanceof Error?': '+last.message:''));
-}
-
-async function launch(){
- const profile=await mkdtemp(join(tmpdir(),'mip-chrome-'));
- const proc=spawn(chrome,['--headless=new','--no-sandbox','--disable-gpu','--no-first-run','--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],{stdio:'ignore'});
- const port=Number((await until(()=>readFile(join(profile,'DevToolsActivePort'),'utf8').then(t=>t.split('\n')[0]),'DevToolsActivePort')));
- const page=await until(async()=>{const r=await fetch(`http://127.0.0.1:${port}/json/new?about:blank`,{method:'PUT'});return r.ok&&r.json();},'a page target');
- const ws=new WebSocket(page.webSocketDebuggerUrl);
- await new Promise((res,rej)=>{ws.onopen=res;ws.onerror=()=>rej(new Error('CDP socket failed'));});
- let id=0;const pending=new Map(),problems=[],failedAssets=[];
- ws.onmessage=({data})=>{
-  const m=JSON.parse(data);
-  if(m.id&&pending.has(m.id)){const {res,rej}=pending.get(m.id);pending.delete(m.id);m.error?rej(new Error(m.error.message)):res(m.result);return;}
-  if(m.method==='Runtime.exceptionThrown')problems.push(m.params.exceptionDetails.exception?.description??m.params.exceptionDetails.text);
-  if(m.method==='Runtime.consoleAPICalled'&&m.params.type==='error')problems.push('console.error: '+m.params.args.map(a=>a.value??a.description).join(' '));
-  if(m.method==='Network.responseReceived'&&m.params.response.status>=400&&!/\/api\//.test(m.params.response.url))failedAssets.push(m.params.response.status+' '+m.params.response.url);
-  if(m.method==='Network.loadingFailed')failedAssets.push('failed '+m.params.errorText);
- };
- const send=(method,params={})=>new Promise((res,rej)=>{const n=++id;pending.set(n,{res,rej});ws.send(JSON.stringify({id:n,method,params}));});
- for(const d of ['Page','Runtime','Network'])await send(d+'.enable');
- const evaluate=async expression=>{
-  const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});
-  if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description??r.exceptionDetails.text);
-  return r.result.value;
- };
- const api={
-  problems,failedAssets,evaluate,
-  async goto(url){await send('Page.navigate',{url});await until(()=>evaluate('document.readyState==="complete"'),'page load');},
-  waitFor:(expr,what)=>until(()=>evaluate(expr),what),
-  click:sel=>evaluate(`document.querySelector(${JSON.stringify(sel)}).click()`),
-  type:(sel,value)=>evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(sel)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));})()`),
-  scrub:ms=>evaluate(`(()=>{const t=document.getElementById('timeline');t.value='${ms}';t.dispatchEvent(new Event('input',{bubbles:true}));})()`),
-  tick:(sel,on=true)=>evaluate(`(()=>{const c=document.querySelector(${JSON.stringify(sel)});if(c.checked!==${on})c.click();})()`),
-  text:sel=>evaluate(`document.querySelector(${JSON.stringify(sel)})?.textContent??null`),
-  async close(){try{ws.close();}catch{}proc.kill();await sleep(150);await rm(profile,{recursive:true,force:true,maxRetries:5,retryDelay:100}).catch(()=>{});},
- };
- return api;
-}
-
-async function withReviewer(fn){
- const directory=await mkdtemp(join(tmpdir(),'mip-browser-'));
- const server=await createReviewerServer({directory,approvalSecret:'secret',reviewToken:'session-token',reviewerId:'designer-1'});
- await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const browser=await launch();
- try{await fn({browser,directory,url:'http://127.0.0.1:'+server.address().port+'/'});}
- finally{await browser.close();await new Promise(r=>server.close(r));await rm(directory,{recursive:true,force:true});}
-}
+const chrome=findChrome();
 const ALL=['anticipation','rotation','constellation'];
 const ready=b=>b.waitFor('document.querySelectorAll("#segments li").length===3&&!document.getElementById("save").disabled','segments rendered');
 const comment=async(b,ms,text)=>{await b.scrub(ms);await b.type('#comment',text);await b.click('#add-comment');};
