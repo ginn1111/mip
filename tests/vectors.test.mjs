@@ -60,3 +60,35 @@ test('V5: artifactDigest rejects an artifact with an unsupported value',()=>{
 test('V5 limitation: duplicate keys are invisible once parsed',()=>{
  assert.equal(digest(JSON.parse('{"a":1,"a":2}')),digest({a:2}));
 });
+
+// Project owner decision (2026-10-15): duplicate JSON keys are rejected, not tolerated.
+import {mkdtemp,writeFile,mkdir,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {ArtifactStore,parseStrictJson} from '../packages/artifacts/index.mjs';
+import {ApprovalService} from '../packages/artifacts/approval.mjs';
+test('parseStrictJson rejects duplicate keys at any depth and accepts valid JSON',()=>{
+ for(const text of ['{"a":1,"a":2}','{"x":{"b":1,"b":1}}','[{"k":1},{"k":2,"k":3}]','{"a":1,"\\u0061":2}'])
+  assert.throws(()=>parseStrictJson(text),/Duplicate JSON key/,text);
+ assert.deepEqual(parseStrictJson('{"a":1,"b":{"a":2},"c":[{"a":3},{"a":4}],"s":"{\\"a\\":1,\\"a\\":2}"}'),{a:1,b:{a:2},c:[{a:3},{a:4}],s:'{"a":1,"a":2}'});
+ assert.throws(()=>parseStrictJson('{bad'),SyntaxError);
+});
+test('ArtifactStore.read rejects a stored artifact with a duplicate key',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'mip-dup-'));
+ try{
+  const store=new ArtifactStore(dir);await mkdir(join(dir,'a'),{recursive:true});
+  await writeFile(join(dir,'a','1.json'),'{"protocol":"mip/0.7","id":"a","payload":{"goal":"seen","goal":"hidden"}}');
+  await assert.rejects(()=>store.read('a',1),/Duplicate JSON key/);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+test('ApprovalService.sealed rejects a lock record with a duplicate key',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'mip-dup-'));
+ try{
+  const store=new ArtifactStore(dir);
+  const a={protocol:'mip/0.7',id:'a',projectId:'p',kind:'intent-profile',revision:1,lifecycle:'draft',dependencies:[],payload:{scene:'s',goal:'g',constraints:[]},evidence:[],approvals:[]};
+  await store.create(a);
+  const svc=new ApprovalService(store,{verifyPrincipal:async()=>null});
+  await writeFile(svc.sidecar('a',1),'{"lock":{"digest":"x"},"lock":{"digest":"y"},"approval":{}}');
+  await assert.rejects(()=>svc.sealed('a',1),/Duplicate JSON key/);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
