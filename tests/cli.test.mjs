@@ -120,10 +120,10 @@ test('verify runs the verification gate and is BLOCKED without an implementation
  const r=mip(['verify'],{cwd});assert.equal(r.status,2);assert.match(r.stdout,/BLOCKED/);assert.match(r.stdout,/MISSING_REQUIRED/);assert.match(r.stdout,/implementation-contract/);
 }));
 
-test('lock never approves: creative phase points to the reviewer, others fail closed, exit 3',()=>project(async cwd=>{
+test('lock never approves: every phase points to the web reviewer, exit 3',()=>project(async cwd=>{
  mip(['intent','create','--scene','zodiac','--text','Make it organic'],{cwd});
  const creative=mip(['lock','--phase','prototype'],{cwd});assert.equal(creative.status,3);assert.match(creative.stderr,/mip preview/);assert.ok(oneLine(creative),creative.stderr);
- const other=mip(['lock','--phase','semantic'],{cwd});assert.equal(other.status,3);assert.match(other.stderr,/host-verified human/);
+ for(const phase of ['semantic','implementation','verification','complete']){const r=mip(['lock','--phase',phase],{cwd});assert.equal(r.status,3,phase);assert.match(r.stderr,/mip preview/,phase);}
  assert.equal(mip(['lock','--phase','nope'],{cwd}).status,1);assert.equal(mip(['lock'],{cwd}).status,1);
  await assertNoApprovalOrLock(cwd);
 }));

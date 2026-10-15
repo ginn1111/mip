@@ -20,7 +20,7 @@ The protocol has no command line. Everything runs through tests or the Scorpio e
 - **B4 glossary.** `mip glossary resolve --scene <id> --text <text>` prints each match with status `resolved`, `ambiguous` or `unknown` (the `unknown` status needs AGE-19; before it lands the command reports resolved and ambiguous only).
 - **B5 validate and status.** `mip validate --phase <phase>` loads the artifacts for that phase and runs `validateGate`, printing `PASS` or `BLOCKED` with violation codes, exit 0 or 2. `mip status` shows each artifact kind, revision, lifecycle and whether it is locked.
 - **B6 preview.** `mip preview --scene <id>` starts the existing reviewer server for the scene's prototype-spec and prints the URL. It does not approve anything.
-- **B7 lock.** `mip lock --phase <phase>` never creates an approval. For creative artifacts (`prototype-spec`, `prototype-review`) it refuses and points to the reviewer. For other artifacts it locks only when the host supplies a verified human principal (TBD below); otherwise it fails with exit 3.
+- **B7 lock.** `mip lock --phase <phase>` never creates an approval. For every phase it refuses with exit 3 and points to the web reviewer (`mip preview`). Project owner decision 2026-10-15: all approvals, creative or not, happen in the web reviewer; extending the reviewer to non-creative artifacts is separate work (AGE-23 follow-up).
 - **B8 verify.** `mip verify` runs `validateGate('verification', ...)`. It needs an `implementation-contract` artifact (TBD below).
 - **B9 Help and failures.** `mip --help` and `mip <command> --help` print usage. Unknown command, missing flag, missing store or unreadable artifact give a one-line message and exit 1. Exit codes: 0 ok, 1 usage or I/O, 2 gate BLOCKED, 3 approval refused.
 
@@ -39,7 +39,7 @@ The protocol has no command line. Everything runs through tests or the Scorpio e
 - [ ] `mip init` creates config and store, and a second run refuses (B2).
 - [ ] `mip intent create` then `mip validate --phase semantic` reports `BLOCKED` while a blocking ambiguity exists (B3, B5).
 - [ ] `mip status` lists artifacts with lifecycle and lock state; `--json` output parses (B5).
-- [ ] `mip lock` on a creative artifact exits 3 and names the reviewer (B7).
+- [ ] `mip lock` exits 3 for every phase and names the reviewer (B7).
 - [ ] No command writes an `approvals` entry or a `lock` (B7), checked by a test that scans the store after every command.
 - [ ] Every command has `--help`; bad input exits 1 with one line (B9).
 - [ ] `npm test` passes and `node packages/cli/bin.mjs --help` works from a clean checkout.
@@ -50,6 +50,5 @@ The protocol has no command line. Everything runs through tests or the Scorpio e
 - Phase name unknown: exit 1 listing valid phases.
 
 ## Open (TBD)
-- How the CLI proves a human principal for non-creative locks (interactive TTY confirmation plus host token, or reviewer-only). Owner: user. Until decided, B7 fails closed for all kinds.
 - Where `implementation-contract` and `verification-record` come from (no code for them exists). Owner: user. B8 is blocked on this.
 - Package location `packages/cli` and the `.mip/` store default follow RFC 0005 and `serve.mjs`. Confirm. Owner: user.

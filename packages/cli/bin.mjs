@@ -11,14 +11,13 @@ import {validateGate} from '../gates/index.mjs';
 import {extractIntent,proposeSemanticContract,resolve as resolveTerms} from '../glossary/index.mjs';
 
 const PHASES=['semantic','prototype','implementation','verification','complete'];
-const CREATIVE_PHASES=['prototype','implementation'];
 const COMMANDS={
  init:'mip init [dir]                                        create mip.config.json and the artifact store',
  intent:'mip intent create --scene <id> --text <text> [--candidate <phrase>...]   write a draft intent-profile and semantic-contract',
  glossary:'mip glossary resolve --scene <id> --text <text>          show how each term resolves',
  validate:'mip validate --phase <phase> [--json]                  run the phase gate (exit 2 when BLOCKED)',
  preview:'mip preview --scene scorpio [--port <n>]                serve the human reviewer; approves nothing',
- lock:'mip lock --phase <phase>                                refuses: approval is a verified human act',
+ lock:'mip lock --phase <phase>                                refuses: every approval happens in the web reviewer',
  status:'mip status [--json]                                     list artifacts, lifecycle and lock state',
  verify:'mip verify                                             run the verification gate'};
 class UsageError extends Error{}
@@ -123,8 +122,8 @@ const commands={
   if(!values.phase)fail('--phase is required; one of '+PHASES.join(', '));
   if(!PHASES.includes(values.phase))fail('unknown phase "'+values.phase+'"; one of '+PHASES.join(', '));
   await loadProject();
-  if(CREATIVE_PHASES.includes(values.phase))throw new Refused('creative approval is a human act in the reviewer: run `mip preview`');
-  throw new Refused('locking needs a host-verified human identity, which this CLI cannot provide');
+  // Project owner decision 2026-10-15: every approval, creative or not, happens in the web reviewer.
+  throw new Refused('approval is a human act in the web reviewer: run `mip preview`');
  },
  async preview(args){
   const {values}=parse(args,{scene:{type:'string'},port:{type:'string'}});
