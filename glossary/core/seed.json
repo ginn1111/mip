@@ -25,7 +25,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Make the globe spin feel organic",
+        "intent": "motion that feels natural, never mechanically uniform",
+        "manifestation": "gentle acceleration with a small coordinated secondary motion"
+      }
+    ]
   },
   {
     "id": "motion.anticipation",
@@ -53,7 +60,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Add a wind-up before the globe turns",
+        "intent": "a preparatory action that signals the main move",
+        "manifestation": "a small pre-action displacement before the rotation starts"
+      }
+    ]
   },
   {
     "id": "cinematography.cinematic",
@@ -81,7 +95,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Give the reveal a cinematic feel",
+        "intent": "film-like staging and pacing with a clear narrative focus",
+        "manifestation": "framing, lighting and rhythm coordinated toward one focal subject"
+      }
+    ]
   },
   {
     "id": "timing.snappy",
@@ -109,7 +130,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Make the panel open snappy",
+        "intent": "quick, deliberate motion with low perceived latency",
+        "manifestation": "a short transition with a crisp settle"
+      }
+    ]
   },
   {
     "id": "motion.weighty",
@@ -137,7 +165,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Make the globe feel heavy",
+        "intent": "motion that conveys mass and inertia",
+        "manifestation": "controlled acceleration and a longer settle"
+      }
+    ]
   },
   {
     "id": "direction.magnetic",
@@ -165,7 +200,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Make the stars feel like they are pulling the eye",
+        "intent": "attention drawn toward a focal point",
+        "manifestation": "a focal pull or a camera approach toward the subject"
+      }
+    ]
   },
   {
     "id": "timing.ease-in",
@@ -192,7 +234,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Use an ease-in for the start of the turn",
+        "intent": "interpolation that accelerates away from rest",
+        "manifestation": "an ease-in curve on the rotation track"
+      }
+    ]
   },
   {
     "id": "timing.ease-out",
@@ -219,7 +268,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Use an ease-out so it can decelerate into place",
+        "intent": "interpolation that slows toward rest",
+        "manifestation": "an ease-out curve on the final approach"
+      }
+    ]
   },
   {
     "id": "timing.ease-in-out",
@@ -246,7 +302,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Use a smooth ease on the whole move",
+        "intent": "smooth acceleration followed by smooth deceleration",
+        "manifestation": "an s-curve across the keyframes"
+      }
+    ]
   },
   {
     "id": "motion.overshoot",
@@ -273,7 +336,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Let the label overshoot its target",
+        "intent": "movement that goes past the target and then corrects",
+        "manifestation": "the track exceeds its end value, then settles back"
+      }
+    ]
   },
   {
     "id": "motion.follow-through",
@@ -300,7 +370,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Add trailing follow-through on the ribbon",
+        "intent": "parts that keep moving after the main body stops",
+        "manifestation": "a delayed secondary track on the trailing element"
+      }
+    ]
   },
   {
     "id": "motion.secondary-action",
@@ -327,7 +404,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Add a secondary motion on the stars",
+        "intent": "supporting movement that strengthens the main action",
+        "manifestation": "a separate low-amplitude track beside the primary one"
+      }
+    ]
   },
   {
     "id": "composition.staging",
@@ -354,7 +438,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Improve the staging so the focus lands on the globe",
+        "intent": "presentation that directs attention to the principal action",
+        "manifestation": "clear hierarchy and contrast around the main actor"
+      }
+    ]
   },
   {
     "id": "animation.squash-and-stretch",
@@ -382,7 +473,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Add squash and stretch on the button press",
+        "intent": "shape deformation that shows flexibility or force",
+        "manifestation": "scale animated on separate axes through the move"
+      }
+    ]
   },
   {
     "id": "motion.arc",
@@ -409,7 +507,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Move the camera along an arc",
+        "intent": "a curved path that avoids mechanical straight-line travel",
+        "manifestation": "a spline through the keyframe positions"
+      }
+    ]
   },
   {
     "id": "animation.slow-in-slow-out",
@@ -437,7 +542,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Use slow-in-slow-out on the turn",
+        "intent": "smaller changes near the start and end of the move",
+        "manifestation": "nonlinear interpolation with soft start and soft stop"
+      }
+    ]
   },
   {
     "id": "animation.timing",
@@ -464,7 +576,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Adjust the timing of the reveal",
+        "intent": "spacing and duration give the move its expressive character",
+        "manifestation": "keyframes distributed unevenly in time"
+      }
+    ]
   },
   {
     "id": "animation.spacing",
@@ -491,7 +610,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Check the spacing between frames",
+        "intent": "distance covered between successive frames",
+        "manifestation": "a velocity distribution along the track"
+      }
+    ]
   },
   {
     "id": "camera.parallax",
@@ -518,7 +644,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Add depth offset between the layers",
+        "intent": "layers at different depths shift by different amounts",
+        "manifestation": "depth-scaled translation per layer"
+      }
+    ]
   },
   {
     "id": "camera.dolly-in",
@@ -545,7 +678,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Push in toward the globe",
+        "intent": "the camera moves toward the subject without changing the lens",
+        "manifestation": "camera position advances forward along the view axis"
+      }
+    ]
   },
   {
     "id": "camera.orbit",
@@ -572,7 +712,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Arc camera around the globe",
+        "intent": "the camera travels around the target on a curve",
+        "manifestation": "a camera rig orbit about the target point"
+      }
+    ]
   },
   {
     "id": "camera.rack-focus",
@@ -599,7 +746,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Do a focus pull from the globe to the stars",
+        "intent": "focus shifts from one subject to another",
+        "manifestation": "depth-of-field focus interpolated between two planes"
+      }
+    ]
   },
   {
     "id": "camera.depth-of-field",
@@ -626,7 +780,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Use a shallow dof on the foreground",
+        "intent": "the range of apparent focus in the scene is narrowed",
+        "manifestation": "lens aperture and focus distance settings"
+      }
+    ]
   },
   {
     "id": "composition.framing",
@@ -653,7 +814,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Tighten the composition around the globe",
+        "intent": "subject placement and scale within the viewport",
+        "manifestation": "camera target and bounds adjusted"
+      }
+    ]
   },
   {
     "id": "composition.blocking",
@@ -680,7 +848,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Plan the positions for the three beats",
+        "intent": "subject and camera positions planned across a scene",
+        "manifestation": "state-based poses for each beat"
+      }
+    ]
   },
   {
     "id": "direction.reveal",
@@ -707,7 +882,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Unveil the constellation after the turn",
+        "intent": "a subject or information appears progressively",
+        "manifestation": "opacity or mask progression over time"
+      }
+    ]
   },
   {
     "id": "timing.hold",
@@ -735,7 +917,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Add a beat before the stars appear",
+        "intent": "intentional stillness that gives the action meaning",
+        "manifestation": "a constant keyframe interval"
+      }
+    ]
   },
   {
     "id": "motion.settle",
@@ -762,7 +951,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Let the globe land softly",
+        "intent": "a final damping into a stable pose",
+        "manifestation": "deceleration without jerk"
+      }
+    ]
   },
   {
     "id": "timing.stagger",
@@ -789,7 +985,14 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Cascade the star entrances",
+        "intent": "related animations start at offset times",
+        "manifestation": "sequenced start delays"
+      }
+    ]
   },
   {
     "id": "timing.loop",
@@ -816,6 +1019,13 @@
       "source": "project",
       "reference": "MIP curated seed vocabulary; proposed project definitions, human review required"
     },
-    "status": "proposed"
+    "status": "proposed",
+    "examples": [
+      {
+        "phrase": "Make the idle spin repeat",
+        "intent": "a bounded animation cycle that repeats",
+        "manifestation": "a repeatable periodic track"
+      }
+    ]
   }
 ]
