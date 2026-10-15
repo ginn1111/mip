@@ -20,6 +20,16 @@ async function withServer(fn){
 const post=(base,body,auth='Bearer session-token')=>fetch(base+'/api/reviews',{method:'POST',headers:{'content-type':'application/json',...(auth?{authorization:auth}:{})},body:typeof body==='string'?body:JSON.stringify(body)});
 const protoRef=async base=>(await (await fetch(base+'/api/prototype')).json()).ref;
 
+test('every script the page references resolves to a served asset',()=>withServer(async({base})=>{
+ const html=await (await fetch(base+'/')).text();
+ const srcs=[...html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)].map(m=>m[1]);
+ assert.ok(srcs.length>0);
+ for(const src of srcs){
+  const res=await fetch(new URL(src,base+'/'));
+  assert.equal(res.status,200,src);
+ }
+}));
+
 test('static handler serves only reviewer UI assets',()=>withServer(async({base})=>{
  for(const p of ['/','/examples/scorpio/reviewer.mjs','/examples/scorpio/review.mjs','/packages/prototype/review.mjs','/packages/prototype/index.mjs'])
   assert.equal((await fetch(base+p)).status,200,p);

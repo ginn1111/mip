@@ -15,7 +15,7 @@ function render(){
  const stars=[[370,100],[422,130],[466,176],[440,227],[481,263],[512,239]];
  ctx.beginPath();stars.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.stroke();
  ctx.fillStyle='#faf9f5';for(const [x,y] of stars){ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
- $('time').value=timeMs+' ms';$('timeline').value=String(timeMs);$('caption').textContent=frame.storyboard?.caption??'Scene';
+ $('time').value=Math.round(timeMs)+' ms';$('timeline').value=String(Math.round(timeMs));$('caption').textContent=frame.storyboard?.caption??'Scene';
  $('state').textContent='State: '+frame.snapshot.state;$('transition').textContent='Transitions: '+(frame.activeTransitions.map(t=>t.id).join(', ')||'none');
  for(const btn of $('frames').querySelectorAll('button'))btn.setAttribute('aria-current',String(Number(btn.dataset.time)===frame.storyboard?.timeMs));
 }
