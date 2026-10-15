@@ -91,5 +91,5 @@ if(fileURLToPath(import.meta.url)===resolve(process.argv[1]??'')){
  const server=await createReviewerServer({directory:resolve(process.env.MIP_REVIEW_DIR||'.mip/reviews'),approvalSecret:process.env.MIP_APPROVAL_SECRET,
   reviewToken:process.env.MIP_REVIEW_TOKEN,reviewerId:process.env.MIP_REVIEWER_ID});
  const port=Number(process.env.PORT||4173);
- server.listen(port,'127.0.0.1',()=>console.log('MIP reviewer http://127.0.0.1:'+port));
+ server.listen(port,'127.0.0.1',()=>console.log('MIP reviewer http://127.0.0.1:'+server.address().port+'/'));
 }
