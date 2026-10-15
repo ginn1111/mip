@@ -1,0 +1,20 @@
+{
+  "durationMs": 3000,
+  "fps": 30,
+  "actors": [{"id": "globe", "initialProperties": {"rotation": 0, "scale": 1}}],
+  "states": [{"id": "idle"}, {"id": "hover"}],
+  "transitions": [{"id": "idle-to-hover", "from": "idle", "to": "hover", "trigger": "pointer-enter", "durationMs": 400, "startMs": 1000}],
+  "tracks": [
+    {"actorId": "globe", "property": "rotation", "keyframes": [{"timeMs": 0, "value": 0}, {"timeMs": 3000, "value": 90, "easing": "ease-in-out"}]},
+    {"actorId": "globe", "property": "scale", "keyframes": [{"timeMs": 0, "value": 1}, {"timeMs": 1000, "value": 1}, {"timeMs": 1400, "value": 1.2, "easing": "ease-out"}]}
+  ],
+  "storyboard": [{"timeMs": 0, "caption": "Globe at rest"}, {"timeMs": 1000, "caption": "Pointer enters, globe grows"}, {"timeMs": 3000, "caption": "Rotation complete"}],
+  "scenarios": [
+    {"id": "autoplay", "initialState": "idle", "events": []},
+    {"id": "hover", "initialState": "idle", "events": [{"timeMs": 1000, "type": "pointer-enter", "toState": "hover"}]}
+  ],
+  "reviewSegments": [
+    {"id": "intro", "startMs": 0, "endMs": 1000, "scenarioIds": ["autoplay", "hover"]},
+    {"id": "reaction", "startMs": 1000, "endMs": 3000, "scenarioIds": ["autoplay", "hover"]}
+  ]
+}
