@@ -5,6 +5,8 @@ import {artifactDigest} from '../artifacts/index.mjs';
 import {expectedEvidence} from './review-manifest.mjs';
 import {planValid,reviewShapeValid,reviewConsistent,reviewComplete} from './review-rules.mjs';
 
+import {parseStrictJson} from '../artifacts/index.mjs';
+
 /** Client-safe rejection: message may be returned to callers; `status` maps to HTTP. */
 export class ReviewRejected extends Error{constructor(message,status=400){super(message);this.status=status;}}
 
@@ -87,7 +89,7 @@ export class PrototypeReviewService {
   try{raw=await readFile(this.draftPath(prototypeRef),'utf8');}
   catch(error){if(error.code==='ENOENT')return null;throw error;}
   let draft;
-  try{draft=JSON.parse(raw);}catch{throw new ReviewRejected('Corrupt review draft',409);}
+  try{draft=parseStrictJson(raw);}catch{throw new ReviewRejected('Corrupt review draft',409);}
   const shaped=draft&&typeof draft==='object'&&Object.keys(draft).length===draftKeys.length&&draftKeys.every(k=>k in draft)&&
    refValid(draft.prototypeRef)&&DRAFT_STATUS.includes(draft.status)&&draft.reviewer?.role==='human'&&typeof draft.reviewer.id==='string'&&reviewShapeValid(draft.scenarioReviews);
   if(!shaped)throw new ReviewRejected('Corrupt review draft',409);
