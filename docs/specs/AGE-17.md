@@ -41,7 +41,7 @@ ADR-0001 has one canonicalization vector and a five-line version policy. There i
 - [ ] `npm test` passes.
 
 ## Edge cases
-- V5: `digest` used to accept `NaN`; fixed. Duplicate keys remain undetectable after `JSON.parse`.
+- V5: `digest` used to accept `NaN`; fixed. Duplicate keys are now rejected at every read boundary by `parseStrictJson` (project owner decision).
 - Unicode normalization: JCS does not normalize; the ADR must say so.
 
 ## Open (TBD)

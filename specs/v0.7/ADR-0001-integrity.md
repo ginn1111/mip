@@ -39,7 +39,7 @@ Vectors live in `tests/schema.test.mjs` (V1) and `tests/vectors.test.mjs` (V1 to
 - **V2.** RFC 8785 number forms: `333333333.33333329`, `1E30`, `4.50`, `2e-3` and `0.000000000000000000000000001` canonicalize to `333333333.3333333`, `1e+30`, `4.5`, `0.002` and `1e-27`, with `literals` before `numbers`.
 - **V3.** Keys sort by UTF-16 code units (RFC 8785 section 3.2.3), including a surrogate pair that sorts before U+FB33 although its code point is higher.
 - **V4.** An artifact digest ignores `lifecycle`, `approvals` and `lock`, and changes with `protocol`, `id`, `projectId`, `kind`, `revision`, `dependencies`, `payload` or `evidence`.
-- **V5.** `digest()` rejects `undefined`, `NaN`, infinity, functions, symbols, BigInt, class instances (for example `Date`, `Map`) and cycles with `Unsupported JSON value at <path>`. Duplicate keys cannot be detected after `JSON.parse`; readers that need that guarantee must parse with a duplicate-rejecting parser.
+- **V5.** `digest()` rejects `undefined`, `NaN`, infinity, functions, symbols, BigInt, class instances (for example `Date`, `Map`) and cycles with `Unsupported JSON value at <path>`. Duplicate object keys are never allowed: every read boundary (artifact store, lock records, review drafts, reviewer request bodies, glossary seed) parses with `parseStrictJson`, which rejects them (project owner decision 2026-10-15).
 
 Versioning and migration policy: `ADR-0002-migration.md`.
 

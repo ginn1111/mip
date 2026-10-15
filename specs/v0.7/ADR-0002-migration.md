@@ -15,8 +15,9 @@ Artifacts carry `protocol` (today `mip/0.7`) and are hashed over their immutable
 5. **Digest changes invalidate approvals.** Because `protocol` is inside the digest, revision N+1 has a new digest. Approvals and locks for revision N do not carry over. The new revision needs its own human approval and lock, in phase order.
 6. **Dependents become stale.** Dependents reference exact `{id, revision, digest}`. When an upstream artifact gets a new revision, dependents pointing at the old digest fail the gate with `STALE_DEPENDENCY` until they are migrated and re-approved.
 7. **Mixed graphs.** A gate run rejects a dependency graph that mixes protocol identifiers unless a later ADR defines an explicit allowance.
-8. **No normalization.** Canonicalization does not apply Unicode normalization. Two strings that differ only in normalization form hash differently.
-9. **Tooling.** A tool may propose a migration, never lock one, and never grant approval (ADR-0001, lock process step 6).
+8. **No duplicate keys.** Stored and received JSON with a repeated object key is rejected, never resolved to one value.
+9. **No normalization.** Canonicalization does not apply Unicode normalization. Two strings that differ only in normalization form hash differently.
+10. **Tooling.** A tool may propose a migration, never lock one, and never grant approval (ADR-0001, lock process step 6).
 
 ## Alternatives considered
 
@@ -31,6 +32,5 @@ Artifacts carry `protocol` (today `mip/0.7`) and are hashed over their immutable
 
 ## Follow-up
 
-- Duplicate-key detection needs a duplicate-rejecting JSON parser at read boundaries; `digest()` cannot see duplicates after `JSON.parse` (TBD, owner: project owner).
 - Decide whether mixed-protocol graphs ever need an allowance (TBD, owner: project owner).
 - Reconcile the protocol identifier: Linear RFC 0003 says `mip/0.5` (draft v0.6), the repository and ADR-0001 say `mip/0.7`. This ADR uses `mip/0.7` (TBD, owner: project owner).
