@@ -194,6 +194,16 @@
         },
         "reviewedDigest": {
           "$ref": "#/$defs/digest"
+        },
+        "attestation": {
+          "type": "object",
+          "required": ["issuer", "algorithm", "signature"],
+          "additionalProperties": false,
+          "properties": {
+            "issuer": {"type": "string", "minLength": 1},
+            "algorithm": {"const": "hmac-sha256"},
+            "signature": {"$ref": "#/$defs/digest"}
+          }
         }
       }
     },
