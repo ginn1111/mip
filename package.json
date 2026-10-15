@@ -11,5 +11,8 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "json-canonicalize": "^1.2.0"
+  },
+  "bin": {
+    "mip": "packages/cli/bin.mjs"
   }
 }
