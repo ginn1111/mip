@@ -48,6 +48,14 @@ Definitions consist of stable IDs, domains, definitions, aliases, contextual int
 
 A prototype contains actors, states, transitions, tracks, storyboard keyframes, and review scenarios. The evaluator `evaluate(spec, scenarioId, timeMs)` MUST return identical canonical scene snapshots for identical inputs. Event ordering, random seeds, overlapping tracks and transition interruption MUST be defined. Reviewer MUST support a scenario selector, storyboard view, transition view, animation view and timeline scrubbing. Human approval MUST bind to the exact prototype revision and evidence.
 
+### 6.1 Review evidence and creative locks
+
+A `prototype-spec` declares non-empty, unique `scenarios` and `reviewSegments`; every segment names at least one existing scenario and a valid time range, and every scenario is covered by at least one segment. A `prototype-review` records, for its exact `prototypeRef` (`{id,revision,digest}`), one accepted entry per scenario and one accepted entry per required segment of that scenario, plus the verified human `reviewer`.
+
+A host MUST authenticate the human once per approval and MUST NOT accept caller-supplied roles. Approvals of `prototype-spec` and `prototype-review` MUST carry a host attestation over `{actor,decision,reviewedDigest,timestamp}`; consumers MUST verify it. Locking MUST be all-or-nothing: a failed approval leaves no new lock.
+
+The implementation gate MUST block when any `prototype-spec` lacks exactly one matching locked `prototype-review`, when the review digest, project or coverage does not match, when the review is not `approved`, or when the reviewer differs from the attested approver.
+
 ## 7. Artifact envelope
 
 Common fields: protocol, id, projectId, kind, revision, lifecycle, dependencies, payload, evidence, approvals and lock. Dependencies carry `{id,revision,digest}`. Approvals carry actor, role, decision, timestamp and reviewedDigest. Locks carry content digest and dependency digests. Canonical JSON serialization SHOULD use RFC 8785 (JCS) with immutable fields explicitly enumerated; final hashing test vectors are part of AGE-17.
