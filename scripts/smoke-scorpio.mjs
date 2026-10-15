@@ -67,5 +67,10 @@ try{
  log('gate with changed prototype',bad.status+' '+[...new Set(bad.violations.map(v=>v.code))].join(','));assert.equal(bad.status,'BLOCKED');
  const missing=await validateGate('implementation',[...base,sealedProto],load,{verifyApproval:auth.verifyApproval});
  log('gate with missing review',missing.status+' '+[...new Set(missing.violations.map(v=>v.code))].join(','));assert.equal(missing.status,'BLOCKED');
+ log('review evidence',sealedReview.evidence.map(e=>e.uri+' '+e.digest.slice(0,19)+'…').join(', '));
+ assert.equal(sealedReview.evidence.length,1);assert.equal(sealedReview.evidence[0].mediaType,'application/vnd.mip.frame-manifest+json');
+ const forged={...sealedReview,evidence:[{...sealedReview.evidence[0],digest:'sha256:'+'0'.repeat(64)}]};
+ const ev=await validateGate('implementation',[...base,sealedProto,forged],load,{verifyApproval:auth.verifyApproval});
+ log('gate with altered evidence',ev.status+' '+[...new Set(ev.violations.map(v=>v.code))].join(','));assert.ok(ev.violations.some(v=>v.code==='REVIEW_EVIDENCE_MISMATCH'));
  console.log('\nSMOKE OK');
 }finally{child.kill();}
