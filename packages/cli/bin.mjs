@@ -25,13 +25,31 @@ class UsageError extends Error{}
 class Refused extends Error{}
 const fail=message=>{throw new UsageError(message);};
 const ID=/^[a-zA-Z0-9._-]+$/;
+// Duplicate JSON keys are never allowed (project owner decision). Self-contained until #13 lands
+// parseStrictJson; switch to that once it is on main. Checks every object, keys compared after unescaping.
+function parseConfig(text){
+ const value=JSON.parse(text),stack=[];
+ for(let i=0;i<text.length;i++){
+  const c=text[i];
+  if(c==='{'){stack.push(new Set());continue;}
+  if(c==='['){stack.push(null);continue;}
+  if(c==='}'||c===']'){stack.pop();continue;}
+  if(c!=='"')continue;
+  let j=i+1;while(text[j]!=='"')j+=text[j]==='\\'?2:1;
+  const key=JSON.parse(text.slice(i,j+1));let k=j+1;while(/\s/.test(text[k]??''))k++;
+  const keys=stack.at(-1);
+  if(text[k]===':'&&keys){if(keys.has(key))throw new SyntaxError('Duplicate JSON key: '+JSON.stringify(key));keys.add(key);}
+  i=j;
+ }
+ return value;
+}
 
 const help=name=>name?COMMANDS[name]+'\n':'mip <command> [options]\n\n'+Object.values(COMMANDS).map(c=>'  '+c).join('\n')+'\n\nExit codes: 0 ok, 1 usage or I/O, 2 gate BLOCKED, 3 approval refused.\n';
 const parse=(args,options)=>{try{return parseArgs({args,options:{help:{type:'boolean'},...options},allowPositionals:true,strict:true});}catch(e){fail(e.message.split('\n')[0]);}};
 
 async function loadProject(){
  const cwd=process.cwd();let config;
- try{config=JSON.parse(await readFile(join(cwd,'mip.config.json'),'utf8'));}
+ try{config=parseConfig(await readFile(join(cwd,'mip.config.json'),'utf8'));}
  catch(e){if(e.code==='ENOENT')fail('no mip.config.json here: run `mip init`');fail('unreadable mip.config.json: '+e.message);}
  if(config.protocol!=='mip/0.7')fail('unsupported protocol '+JSON.stringify(config.protocol));
  const dir=resolve(cwd,String(config.store??''));const rel=relative(cwd,dir);
