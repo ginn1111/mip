@@ -73,3 +73,17 @@ test('metadata excluded from content digest',()=>{
  assert.equal(hash(material(core)),hash(material({...core,lifecycle:'locked',approvals:[{decision:'approved'}],lock:{digest}})));
  assert.notEqual(hash(material(core)),hash(material({...core,payload:{goal:'changed'}})));
 });
+
+// AGE-18: optional examples on glossary entries (docs/specs/AGE-18.md B2)
+test('glossary examples: valid shape passes; empty or unknown fields fail',()=>{
+ const g={id:'t.x',revision:1,term:'x',domain:'motion',definition:'d',aliases:[],interpretations:[{id:'i',context:[],meaning:'m',motionHints:[]}],provenance:{source:'project'},status:'proposed'};
+ const ex={phrase:'make it x',intent:'an intent',manifestation:'a motion'};
+ assert.equal(glossary({...g,examples:[ex]}),true,JSON.stringify(glossary.errors));
+ assert.equal(glossary(g),true,'examples stay optional');
+ assert.equal(glossary({...g,examples:[]}),false,'empty array');
+ assert.equal(glossary({...g,examples:[{...ex,phrase:''}]}),false,'empty phrase');
+ assert.equal(glossary({...g,examples:[{...ex,intent:''}]}),false,'empty intent');
+ assert.equal(glossary({...g,examples:[{...ex,manifestation:''}]}),false,'empty manifestation');
+ assert.equal(glossary({...g,examples:[{phrase:'a',intent:'b'}]}),false,'missing manifestation');
+ assert.equal(glossary({...g,examples:[{...ex,extra:1}]}),false,'unknown key');
+});
