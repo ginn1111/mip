@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
-import {mkdtemp,rm} from 'node:fs/promises';
+import {mkdtemp,rm,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
@@ -10,7 +10,7 @@ import addFormats from 'ajv-formats';
 import {ArtifactStore,artifactDigest} from '../packages/artifacts/index.mjs';
 import {validateGate} from '../packages/gates/index.mjs';
 import {packEvidence} from '../packages/evidence/index.mjs';
-import {buildDrafts,createDrafts} from '../packages/draft-artifacts/index.mjs';
+import {buildDrafts,createDrafts,checkDraftOutputs,UNRESOLVED} from '../packages/draft-artifacts/index.mjs';
 
 const load=f=>JSON.parse(readFileSync('tests/fixtures/evidence-pack/'+f,'utf8'));
 const pack=()=>load('valid-scorpio.json');
@@ -64,7 +64,7 @@ test('INFERRED and unknown concepts stay unresolved and keep the prototype gate 
  const byPhrase=Object.fromEntries(semantic.payload.concepts.map(c=>[c.phrase,c]));
  assert.equal(byPhrase.magnetic.status,'ambiguous');
  assert.equal(byPhrase.zorbly.status,'unknown');
- assert.deepEqual(semantic.payload.blockingAmbiguities,['magnetic','zorbly']);
+ assert.deepEqual(semantic.payload.blockingAmbiguities.slice(0,2),['magnetic','zorbly']);
  assert.ok(semantic.payload.concepts.every(c=>c.interpretation===''));
  const i=lock(intent),s=lock({...semantic,dependencies:[{id:i.id,revision:1,digest:artifactDigest(i)}]});
  const out=await validateGate('prototype',[i,s],async()=>i);
@@ -104,3 +104,107 @@ test('package source creates no approval or lock and parses no JSON itself',()=>
  const src=readFileSync('packages/draft-artifacts/index.mjs','utf8');
  assert.doesNotMatch(src,/JSON\.parse|lock\s*:|ApprovalService|decision\s*:/);
 });
+
+const withStore=async fn=>{const dir=await mkdtemp(join(tmpdir(),'mip-draft-'));try{return await fn(new ArtifactStore(dir),dir);}finally{await rm(dir,{recursive:true,force:true});}};
+const notTypeError=e=>!(e instanceof TypeError)&&Array.isArray(e.violations)&&e.violations.length>0;
+test('null pack fails closed',()=>assert.throws(()=>buildDrafts(null,opts),notTypeError));
+for(const [label,mutate] of Object.entries({
+ 'non-array observations':p=>{p.observations={};},
+ 'non-array bindings':p=>{p.bindings='x';},
+ 'null hypotheses':p=>{p.hypotheses=null;},
+ 'non-array sources':p=>{p.sources=7;},
+ 'unknown provenanceClass':p=>{p.bindings=[{intentField:'goal',observationIds:['obs-1'],hypothesisIds:[],provenanceClass:'GUESSED'}];},
+ 'non-string intentField':p=>{p.bindings=[{intentField:7,observationIds:['obs-1'],hypothesisIds:[],provenanceClass:'OBSERVED'}];},
+ 'fractional time':p=>{p.observations[0].timeRangeMs=[0.5,3];},
+ 'string times':p=>{p.observations[0].timeRangeMs=['a','b'];},
+ 'non-string actorId':p=>{p.observations[0].actorId=5;},
+ 'non-string concept':p=>{p.hypotheses[0].concept=5;},
+}))test('bad pack shape fails closed with violations, no TypeError: '+label,()=>{const p=pack();mutate(p);assert.throws(()=>buildDrafts(p,opts),notTypeError);});
+test('invalid pack writes nothing to the store',()=>withStore(async(store,dir)=>{
+ const p=pack();p.bindings=[{intentField:7,observationIds:['obs-1'],hypothesisIds:[],provenanceClass:'OBSERVED'}];
+ await assert.rejects(createDrafts(store,p,opts),e=>e.violations.length>0);
+ assert.deepEqual(await readdir(dir),[]);
+}));
+test('output check rejects non-integer times and non-positive fps',()=>{
+ const good=buildDrafts(pack(),opts).artifacts;
+ assert.deepEqual(checkDraftOutputs(good),[]);
+ const bad=structuredClone(good);
+ bad[2].payload.fps=0;bad[2].payload.tracks[0].keyframes[0].timeMs=1.5;bad[2].payload.durationMs=0.5;
+ const codes=checkDraftOutputs(bad).map(v=>v.code);
+ assert.ok(codes.includes('INVALID_FPS')&&codes.includes('INVALID_TIME')&&codes.includes('INVALID_DURATION'),codes.join());
+});
+test('missing or non-positive frameRate falls back to a reported fps default, never 0 (B7)',()=>{
+ for(const fr of [-5,0,0.4,null,undefined]){
+  const p=pack();if(fr===undefined)delete p.sources[0].environment.frameRate;else p.sources[0].environment.frameRate=fr;
+  const {artifacts:[,,proto],report}=buildDrafts(p,opts);
+  assert.equal(proto.payload.fps,30,String(fr));
+  assert.ok(report.assumptions.some(a=>a.field==='fps'&&a.value===30&&a.reason),String(fr));
+ }
+ const p=pack();p.sources[0].environment.frameRate=29.97;
+ const r=buildDrafts(p,opts);
+ assert.equal(r.artifacts[2].payload.fps,30);
+ assert.ok(r.report.assumptions.some(a=>a.field==='fps'&&/29\.97/.test(a.reason)));
+ assert.ok(!buildDrafts(pack(),opts).report.assumptions.some(a=>a.field==='fps'),'fps taken from the pack is not an assumption');
+});
+test('every written default is a report assumption with field, value and reason (B7)',()=>{
+ const {artifacts:[,,proto],report}=buildDrafts(pack(),opts);
+ const easing=report.assumptions.find(a=>a.field==='easing');
+ assert.ok(easing&&easing.value==='linear'&&easing.reason);
+ for(const k of proto.payload.tracks.flatMap(t=>t.keyframes))assert.equal(k.easing,easing.value);
+ assert.ok(report.assumptions.some(a=>a.field==='scenarios[0]'));
+ assert.ok(report.assumptions.some(a=>a.field==='reviewSegments[0]'));
+ for(const a of report.assumptions)assert.ok(a.field&&'value' in a&&a.reason,JSON.stringify(a));
+});
+test('initialState is never an undeclared name: explicit unresolved marker, reported and blocking',()=>{
+ const {artifacts:[,semantic,proto],report}=buildDrafts(pack(),opts);
+ const init=proto.payload.scenarios[0].initialState;
+ assert.ok(proto.payload.states.some(s=>s.id===init)||init.startsWith(UNRESOLVED),init);
+ assert.ok(report.unresolved.some(u=>u.field==='scenarios[0].initialState'&&u.artifact==='prototype-spec'));
+ assert.ok(semantic.payload.blockingAmbiguities.includes('prototype-spec.scenarios[0].initialState'));
+});
+test('unresolved goal is flagged in report and blocks the semantic gate so a human cannot lock it unnoticed',async()=>{
+ const {artifacts:[intent,semantic],report}=buildDrafts(pack(),opts);
+ assert.ok(intent.payload.goal.startsWith(UNRESOLVED));
+ assert.ok(report.unresolved.some(u=>u.artifact==='intent-profile'&&u.field==='goal'&&u.value===intent.payload.goal));
+ assert.ok(semantic.payload.blockingAmbiguities.includes('intent-profile.goal'));
+ const i=lock(intent),s=lock({...semantic,dependencies:[{id:i.id,revision:1,digest:artifactDigest(i)}]});
+ const out=await validateGate('prototype',[i,s],async()=>i);
+ assert.ok(out.violations.some(v=>v.code==='UNRESOLVED_AMBIGUITY'),JSON.stringify(out.violations));
+ const p=pack();
+ p.observations.push({...p.observations[2],id:'obs-goal',event:'declare',property:'goal',measuredValue:'reveal',timeRangeMs:[0,0]});
+ p.bindings=[{intentField:'goal',observationIds:['obs-goal'],hypothesisIds:[],provenanceClass:'DECLARED'}];
+ const r=buildDrafts(p,opts);
+ assert.ok(!r.report.unresolved.some(u=>u.field==='goal'));
+ assert.ok(!r.artifacts[1].payload.blockingAmbiguities.includes('intent-profile.goal'));
+});
+test('dropped OBSERVED goal binding appears in report.unmapped',()=>{
+ const p=pack();
+ p.bindings=[{intentField:'goal',observationIds:['obs-1'],hypothesisIds:[],provenanceClass:'OBSERVED'}];
+ const {report,artifacts}=buildDrafts(p,opts);
+ assert.ok(artifacts[0].payload.goal.startsWith(UNRESOLVED));
+ assert.ok(report.unmapped.some(u=>u.binding==='goal'&&u.provenanceClass==='OBSERVED'),JSON.stringify(report.unmapped));
+});
+test('report.blocking is the semantic blockingAmbiguities (one source)',()=>{
+ const {artifacts:[,semantic],report}=buildDrafts(pack(),opts);
+ assert.equal(report.blocking,semantic.payload.blockingAmbiguities);
+});
+test('same pack gives identical draft digests; rebuild into the store is idempotent (RFC 0007)',()=>withStore(async store=>{
+ assert.deepEqual(buildDrafts(pack(),opts).artifacts.map(artifactDigest),buildDrafts(pack(),opts).artifacts.map(artifactDigest));
+ const first=await createDrafts(store,pack(),opts),second=await createDrafts(store,pack(),opts);
+ assert.deepEqual(second.refs,first.refs);
+ for(const r of first.refs)assert.deepEqual(await store.history(r.id),[1]);
+}));
+test('changed pack creates new revisions (no EEXIST), re-pins dependencies, stales dependents of the old revision (RFC 0007)',()=>withStore(async store=>{
+ const first=await createDrafts(store,pack(),opts);
+ const changed=pack();changed.observations[0].measuredValue=9;
+ const second=await createDrafts(store,changed,opts);
+ second.refs.forEach((r,i)=>{assert.equal(r.id,first.refs[i].id);assert.equal(r.revision,2);assert.notEqual(r.digest,first.refs[i].digest);});
+ const [,s2,p2]=await Promise.all(second.refs.map(r=>store.read(r.id,r.revision)));
+ assert.deepEqual(s2.dependencies,[second.refs[0]]);
+ assert.deepEqual(p2.dependencies,[second.refs[0],second.refs[1]]);
+ const oldS=lock(await store.read(first.refs[1].id,1));
+ const latest=async r=>store.read(r.id,Math.max(...await store.history(r.id)));
+ const out=await validateGate('prototype',[oldS],latest);
+ assert.ok(out.violations.some(v=>v.code==='STALE_DEPENDENCY'),JSON.stringify(out.violations));
+ assert.deepEqual((await createDrafts(store,changed,opts)).refs,second.refs);
+}));
