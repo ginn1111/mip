@@ -40,3 +40,6 @@ In: references, human sessions. Out: metrics and report.
 
 ## Assumptions and open decisions (human decides)
 - Human participants must come from the human. Owner: user.
+
+## Decision: AGE-39 alignment output not used (review fix)
+AGE-39 alignment decisions (accept/reject/edit of inferred transitions) are human acts in the web reviewer and have no machine-readable result this card may consume without reading approval state. The B2 metrics therefore compare ground truth to AGE-35/36 packs and AGE-38 drafts only. Revisit when the owner decides how alignment results feed evaluation.

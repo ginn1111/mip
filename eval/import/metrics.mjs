@@ -7,6 +7,7 @@ export async function stage(fn){try{return {ok:true,value:await fn()};}catch(e){
 
 /** Concept coverage: share of ground-truth concepts named by a hypothesis concept or an observation actor/event/property. */
 export function conceptCoverage(concepts,pack){
+ if(list(concepts).some(c=>typeof c!=='string'||!c.trim()))throw new TypeError('truth.concepts must be non-empty strings'); // '' would match every string
  const hay=[...list(pack?.hypotheses).map(h=>h.concept),...list(pack?.observations).flatMap(o=>[o.actorId,o.event,o.property])].map(s=>String(s).toLowerCase());
  const found=list(concepts).filter(c=>hay.some(h=>h.includes(String(c).toLowerCase())));
  return {found:found.length,total:list(concepts).length,ratio:ratio(found.length,list(concepts).length)};
@@ -27,21 +28,26 @@ export function timingFidelity(instants,prototype,toleranceMs){
 export function missedTransitions(transitions,pack,toleranceMs){
  const obs=list(pack?.observations).map(o=>o.timeRangeMs);
  const missed=list(transitions).filter(t=>!obs.some(([s,e])=>t.timeMs>=s-toleranceMs&&t.timeMs<=e+toleranceMs));
- return {missed:missed.length,total:list(transitions).length,ids:missed.map(t=>t.timeMs)};
+ return {missed:missed.length,total:list(transitions).length,times:missed.map(t=>t.timeMs)};
 }
 
 /**
  * One reference. `stages` = {extract,draft}, each from `stage()`; `truth` and `session` may be absent (reported as missing).
  * A failed stage => `failed:true` and no downstream metric.
  */
-export function evaluate({reference,stages,truth=null,session=null,toleranceMs=100}){
- const failedStage=Object.entries(stages).find(([,s])=>!s.ok);
- const out={reference,failed:Boolean(failedStage),failedStage:failedStage?.[0]??null,error:failedStage?.[1].error??null,
-  concepts:null,timing:null,transitions:null,ambiguities:null,humanMs:session&&Number.isFinite(session.humanMs)?session.humanMs:null,
+export const ARMS=['manual','import'];
+export function evaluate({arm,reference,stages={},truth=null,session=null,toleranceMs=100}){
+ if(!ARMS.includes(arm))throw new TypeError(`arm must be one of ${ARMS.join('|')}`);
+ if(session&&session.arm!==arm)throw new TypeError(`session arm ${JSON.stringify(session.arm)} does not match row arm ${arm}`);
+ if(session&&!(Number.isFinite(session.humanMs)&&session.humanMs>=0))throw new TypeError('session.humanMs must be a finite number >= 0');
+ const manual=arm==='manual'; // manual briefing: human time only; no pipeline stages or fidelity metrics
+ const failedStage=manual?undefined:Object.entries(stages).find(([,s])=>!s.ok);
+ const out={arm,reference,failed:Boolean(failedStage),failedStage:failedStage?.[0]??null,error:failedStage?.[1].error??null,
+  concepts:null,timing:null,transitions:null,ambiguities:null,humanMs:session?session.humanMs:null,
   missing:[]};
- if(!truth)out.missing.push('ground truth');
+ if(!truth&&!manual)out.missing.push('ground truth');
  if(out.humanMs===null)out.missing.push('human session');
- if(out.failed)return out;
+ if(out.failed||manual)return out;
  const pack=stages.extract.value?.pack,drafts=stages.draft.value;
  out.ambiguities=list(drafts?.report?.blocking).length;
  if(truth){
