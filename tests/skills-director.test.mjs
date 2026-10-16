@@ -45,10 +45,30 @@ test('mip-glossary: gate-check instruction and statuses (B2, B4)',()=>{
 
 test('mip-director maps every violation code emitted by the gate engine (B3)',()=>{
  const src=read('packages/gates/index.mjs');
- const codes=[...new Set([...src.matchAll(/code:'([A-Z_]+)'/g)].map(m=>m[1]))];
+ const codes=[...new Set([...src.matchAll(/\bcode\s*:\s*['"`]([A-Z_]+)/g)].map(m=>m[1]))];
  assert.ok(codes.length>=19,'extraction found the codes');
  const rows=new Map(read('skills/mip-director/SKILL.md').split('\n')
   .map(l=>/^\|\s*`([A-Z_]+)`\s*\|\s*(.+?)\s*\|\s*$/.exec(l)).filter(Boolean).map(m=>[m[1],m[2]]));
  const missing=codes.filter(c=>!rows.get(c));
  assert.deepEqual(missing,[],'unmapped gate codes: '+missing.join(', '));
+});
+
+test('mip-director: gate phases, exit codes, no intent gate',()=>{
+ const t=read('skills/mip-director/SKILL.md');
+ assert.match(t,/semantic\|prototype\|implementation\|verification\|complete/);
+ assert.match(t,/no `intent` gate/i);
+ assert.match(t,/\| complete \|/);
+ assert.match(t,/Exit 1 is usage/i);
+ assert.doesNotMatch(read('skills/mip-director/SKILL.md').split('\n')[2],/phases intent,/);
+});
+
+test('mip-director: recovery nits',()=>{
+ const t=read('skills/mip-director/SKILL.md');
+ assert.match(t,/`DIGEST_MISMATCH` \| [^\n]*if `NOT_LOCKED` is also listed, handle that first/i);
+ assert.doesNotMatch(t,/mip preview(?! --scene)/);
+ assert.match(t,/no reviewer yet[^\n]*stop and ask the human/i);
+});
+
+test('walkthrough owner is gintary',()=>{
+ assert.equal(frontmatter(read('docs/walkthroughs/AGE-28.md')).owner,'gintary');
 });

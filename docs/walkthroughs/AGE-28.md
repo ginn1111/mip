@@ -1,7 +1,7 @@
 ---
 status: draft
 scope: skills/mip-director, skills/mip-glossary, tests
-owner: ginb
+owner: gintary
 ---
 
 # Walkthrough — AGE-28 agent following mip-director and mip-glossary
