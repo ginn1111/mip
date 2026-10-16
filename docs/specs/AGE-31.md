@@ -47,3 +47,11 @@ In: prototype-spec, scenario, target. Out: bound targets and a verification-reco
 - Numeric tolerance 1e-6 is an assumption pending owner decision (same status in AGE-29). Owner: user.
 - Dependency policy (optional peerDependencies) needs a human decision before merge. Owner: user.
 - React Three Fiber layer out of scope; plain Three.js only. Owner: user.
+
+## Review-fix clarifications
+- **Bound property set.** Both adapters bind every track property plus every actor `initialProperties` key; a missing binding or target actor throws `Unknown binding: <actor>.<property>`.
+- **Bind-time validation.** Both adapters call `evaluate(spec, scenarioId, 0)` in `bind`, so an invalid spec or unknown scenario throws at bind time.
+- **destroy.** After `destroy()`, `seek` throws `Adapter destroyed`; a second `destroy()` is a no-op.
+- **Locked input.** Verification takes a locked `prototype-spec` artifact; it refuses an unlocked, superseded, unapproved or digest-changed one and records the locked digest in `checks` and the `implementationRef` dependency.
+- **Peer range.** `three` peer range is bounded (`>=0.160.0 <0.200.0`).
+- **Tolerance 1e-6** stays an assumption pending owner decision (`tests/runtime-support.mjs`).
