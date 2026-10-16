@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MIP — Alignment Review</title>
+<style>
+:root{font:15px Inter,system-ui,sans-serif;background:#faf9f5;color:#141413}*{box-sizing:border-box}body{margin:0 auto;padding:32px;max-width:1180px}h1,h2,h3{font-family:Georgia,serif;font-weight:400}h1{font-size:2.2rem;margin-bottom:6px}main{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:20px}section{border:1px solid #e6dfd8;border-radius:12px;padding:20px;background:#fff}.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pane{background:#181715;color:#faf9f5;border-radius:12px;padding:14px;min-height:150px;overflow-wrap:anywhere}.pane h3{margin:0 0 8px;color:#e8a55a}label{display:block;margin:14px 0 6px;font-weight:600}input,select,button{font:inherit;max-width:100%;color:#141413;background:#faf9f5;border:1px solid #d5cec5;border-radius:8px;padding:10px}input[type=range],#token{width:100%}input[type=range]{accent-color:#cc785c;margin:0}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #cc785c55;border-color:#cc785c}.primary{background:#cc785c;color:#fff;border-color:#cc785c;width:100%;margin-top:10px}.primary:disabled{background:#e6dfd8;color:#6c6a64;border-color:#e6dfd8;opacity:1}.muted{color:#6c6a64}.mono{font-family:ui-monospace,monospace;font-size:.82rem;overflow-wrap:anywhere}.items{list-style:none;padding:0}.item{padding:12px 0;border-top:1px solid #ebe6df}.item .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.item input[type=text]{width:9ch}.item[data-decision=accepted]{border-left:4px solid #5db872;padding-left:8px}.item[data-decision=rejected]{border-left:4px solid #c64545;padding-left:8px}.status{padding:10px;border-radius:8px;background:#f5f0e8;margin-top:12px}.success{color:#285c35;background:#e7f4ea}.error{color:#8b2727;background:#f9e8e8}@media(max-width:780px){body{padding:18px}main{grid-template-columns:1fr}.pair{grid-template-columns:1fr}}
+</style></head><body>
+<h1>MIP · Reference vs Prototype</h1><p class="muted">Scrub one timeline, compare the reference frame with the prototype, correct inferred transitions, then approve. Approval locks the exact revision and digest.</p>
+<main><section><div class="pair">
+<div class="pane"><h3>Reference frame</h3><div id="frame">No frames</div></div>
+<div class="pane"><h3>Prototype preview</h3><div id="preview"></div></div></div>
+<label for="timeline">Timeline <output id="time">0 ms</output></label><input id="timeline" type="range" min="0" max="1" step="1" value="0">
+<p class="muted">Reference frame at <span id="frame-time">–</span> ms · offset <span id="offset">–</span> ms · preview at <span id="preview-time">0</span> ms</p></section>
+<section><p><strong>Prototype</strong><br><span id="prototype-ref" class="mono">Loading…</span></p>
+<label for="token">Host review token</label><input id="token" type="password" autocomplete="off" placeholder="Configured MIP_REVIEW_TOKEN">
+<label for="mode">Mode</label><select id="mode"><option value="">Choose…</option><option value="replicate">replicate</option><option value="adapt">adapt</option></select>
+<h3>Inferred transitions</h3><ul id="items" class="items"></ul>
+<button id="approve" class="primary" type="button" disabled>Approve and lock creative artifacts</button>
+<p id="status" class="status" role="status" aria-live="polite">Load evidence before review.</p></section></main>
+<script type="module" src="/examples/alignment/reviewer.mjs"></script></body></html>
