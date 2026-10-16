@@ -14,9 +14,10 @@ Motion on live websites cannot be captured as replayable evidence.
 
 ## Desired behavior
 
-- **B1 Sources.** Only `localhost`/`127.0.0.1` or URLs in an explicit allowlist file from the human. Others refused before any request. Assumption flagged until a rights policy exists.
+- **B1 Sources.** Only `localhost`/`127.0.0.1` or URLs in an explicit allowlist file from the human. Others refused before any request. Assumption flagged until a rights policy exists. An allowlist entry matches its exact path, or every path below it when it ends with `/` (`https://a.com/demo` does not allow `/demo-evil`). Only the literal hostnames `localhost` and `127.0.0.1` are local; `[::1]`, `0.0.0.0`, `localhost.` and other 127.x are refused. Enforcement is two layers: CDP `Fetch` interception plus a Chrome dead-end proxy for everything outside localhost/allowlist (covers WebSocket, workers, preconnect, DNS prefetch); service workers are bypassed.
+- **B1a Safety limits.** Chrome is sandboxed by default (`--no-sandbox` only with option `noSandbox` or env `MIP_CAPTURE_NO_SANDBOX=1`, for containers/CI that cannot sandbox). CDP runs over `--remote-debugging-pipe`, no TCP port. Every CDP call has `callTimeoutMs` (30s) and the run has `timeoutMs` (120s); on timeout, Chrome exit or pipe close, pending calls reject, Chrome's process group is killed and the temp profile removed. `intervalMs` is an integer >= 10; `wait.ms` <= 600000; at most 2000 frames; `styles` is a non-empty array of CSS property names.
 - **B2 Scenario.** JSON steps (`navigate`, `click`, `hover`, `wait`) and a viewport; replays deterministically.
-- **B3 Capture.** Headless Chrome over CDP (pattern of `tests/browser-harness.mjs`): screenshots at an interval, `Animation` domain for CSS animations and transitions, computed styles of selected elements. Canvas/WebGL falls back to screenshots.
+- **B3 Capture.** Headless Chrome over CDP (pattern of `tests/browser-harness.mjs`): screenshots at an interval, `Animation` domain for CSS animations and transitions, computed styles of selected elements. Canvas/WebGL falls back to screenshots (Linear AGE-36 and RFC 0007 say video fallback; see Assumptions).
 - **B4 Claims.** CDP easing is labelled as the element's declared CSS timing function, never as original source. Unreadable values go to the uncertainty report.
 - **B5 Output.** Pack valid under AGE-34, source kind `website`.
 
@@ -42,4 +43,5 @@ In: scenario, allowlist. Out: evidence pack, uncertainty report.
 - Chrome missing: skip with a clear message, like the browser tests.
 
 ## Assumptions and open decisions (human decides)
+- Canvas/WebGL fallback: Linear says video, this spec says screenshots (no new dependency; AGE-35 can extract from a video recorded separately). Screenshots assumed until the owner decides. Owner: user.
 - Rights policy for real external sites. Until decided: localhost and allowlist only. Owner: user.
