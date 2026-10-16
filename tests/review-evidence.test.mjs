@@ -80,3 +80,23 @@ test('implementation gate rejects changed prototype and missing review evidence'
  assert.ok(stale.violations.some(x=>x.code==='DIGEST_MISMATCH'));
  assert.ok(stale.violations.some(x=>x.code==='PROTOTYPE_REVIEW_MISMATCH'));
 }));
+
+test('approval stores frame-manifest evidence; gate recomputes it and blocks empty, altered, extra and duplicate entries',()=>setup(async({store,prototype,reviews,approval,authenticator})=>{
+ const prototypeRef={id:prototype.id,revision:1,digest:artifactDigest(prototype)};
+ const {prototype:locked,review}=await reviews.approve({id:'review',projectId:'scorpio',revision:1,principal:'human-session',prototypeRef,
+  decision:'approved',scenarioReviews:completeReviews()});
+ assert.deepEqual(review.evidence.map(e=>[e.uri,e.mediaType]),[['mip:frame-manifest/scorpio-prototype@1/select-scorpio','application/vnd.mip.frame-manifest+json']]);
+ const intent={protocol:'mip/0.7',id:'intent',projectId:'scorpio',kind:'intent-profile',revision:1,lifecycle:'approved',dependencies:[],payload:{},evidence:[],approvals:[]};
+ const semantic={...intent,id:'semantic',kind:'semantic-contract',payload:{blockingAmbiguities:[]}};
+ await store.create(intent);await store.create(semantic);
+ const base=[await approval.lock('intent',1,{principal:'human-session',decision:'approved',reviewedDigest:artifactDigest(intent)}),
+  await approval.lock('semantic',1,{principal:'human-session',decision:'approved',reviewedDigest:artifactDigest(semantic)})];
+ const gate=evidence=>validateGate('implementation',[...base,locked,{...review,evidence}],ref=>approval.sealed(ref.id,ref.revision),{verifyApproval:authenticator.verifyApproval});
+ assert.equal((await gate(review.evidence)).status,'PASS');
+ const [entry]=review.evidence,codes=async e=>(await gate(e)).violations.map(v=>v.code);
+ assert.ok((await codes([])).includes('MISSING_REVIEW_EVIDENCE'));
+ assert.ok((await codes([{...entry,digest:'sha256:'+'0'.repeat(64)}])).includes('REVIEW_EVIDENCE_MISMATCH'));
+ assert.ok((await codes([{...entry,mediaType:'image/png'}])).includes('REVIEW_EVIDENCE_MISMATCH'));
+ assert.ok((await codes([entry,{...entry,uri:'mip:frame-manifest/x@1/y'}])).includes('REVIEW_EVIDENCE_MISMATCH'));
+ assert.ok((await codes([entry,entry])).includes('REVIEW_EVIDENCE_MISMATCH'));
+}));

@@ -2,7 +2,10 @@ import {mkdir,open,readFile,rename,rm} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {artifactDigest} from '../artifacts/index.mjs';
+import {expectedEvidence} from './review-manifest.mjs';
 import {planValid,reviewShapeValid,reviewConsistent,reviewComplete} from './review-rules.mjs';
+
+import {parseStrictJson} from '../artifacts/index.mjs';
 
 /** Client-safe rejection: message may be returned to callers; `status` maps to HTTP. */
 export class ReviewRejected extends Error{constructor(message,status=400){super(message);this.status=status;}}
@@ -86,7 +89,7 @@ export class PrototypeReviewService {
   try{raw=await readFile(this.draftPath(prototypeRef),'utf8');}
   catch(error){if(error.code==='ENOENT')return null;throw error;}
   let draft;
-  try{draft=JSON.parse(raw);}catch{throw new ReviewRejected('Corrupt review draft',409);}
+  try{draft=parseStrictJson(raw);}catch{throw new ReviewRejected('Corrupt review draft',409);}
   const shaped=draft&&typeof draft==='object'&&Object.keys(draft).length===draftKeys.length&&draftKeys.every(k=>k in draft)&&
    refValid(draft.prototypeRef)&&DRAFT_STATUS.includes(draft.status)&&draft.reviewer?.role==='human'&&typeof draft.reviewer.id==='string'&&reviewShapeValid(draft.scenarioReviews);
   if(!shaped)throw new ReviewRejected('Corrupt review draft',409);
@@ -139,7 +142,8 @@ export class PrototypeReviewService {
   if(!reviewComplete(prototype.payload,scenarioReviews))throw new ReviewRejected('Incomplete prototype review');
   const ref=refFor(prototype);
   const review={protocol:'mip/0.7',id,projectId,kind:'prototype-review',revision,lifecycle:'approved',dependencies:[ref],
-   payload:{prototypeRef:ref,reviewer:{id:identity.id,role:'human'},scenarioReviews,decision},evidence:[],approvals:[]};
+   payload:{prototypeRef:ref,reviewer:{id:identity.id,role:'human'},scenarioReviews,decision},
+   evidence:expectedEvidence(prototype,scenarioReviews),approvals:[]};
   const created=[];
   try{
    try{await this.store.create(review);}catch(error){if(error.code==='EEXIST')throw new ReviewRejected('Review already exists',409);throw error;}

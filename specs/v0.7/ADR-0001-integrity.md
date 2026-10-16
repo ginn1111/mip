@@ -33,9 +33,15 @@ Dependencies are stable references with `id`, `revision`, and exact content `dig
 Hashes prove byte-level integrity, not authorship. Authenticated approvals and durable audit logs are separately required. Any digest validation used for locks MUST occur on the server/CLI authority, never trust only the client UI.
 
 ## Test vectors
-The canonicalization test fixture uses this raw JSON: `{"z":1,"a":{"b":2,"a":1}}`.
-Canonical form MUST be: `{"a":{"a":1,"b":2},"z":1}`.
-The test suite derives SHA-256 from this exact canonical form and independently compares it against the canonicalization library result. Also test key-order invariance, content mutation, and excluded metadata invariance.
+Vectors live in `tests/schema.test.mjs` (V1) and `tests/vectors.test.mjs` (V1 to V5). Expected canonical strings and SHA-256 values are hard-coded and independent of the code under test.
+
+- **V1.** Raw `{"z":1,"a":{"b":2,"a":1}}` canonicalizes to `{"a":{"a":1,"b":2},"z":1}`; the test also covers key-order invariance, content mutation, and excluded metadata invariance.
+- **V2.** RFC 8785 number forms: `333333333.33333329`, `1E30`, `4.50`, `2e-3` and `0.000000000000000000000000001` canonicalize to `333333333.3333333`, `1e+30`, `4.5`, `0.002` and `1e-27`, with `literals` before `numbers`.
+- **V3.** Keys sort by UTF-16 code units (RFC 8785 section 3.2.3), including a surrogate pair that sorts before U+FB33 although its code point is higher.
+- **V4.** An artifact digest ignores `lifecycle`, `approvals` and `lock`, and changes with `protocol`, `id`, `projectId`, `kind`, `revision`, `dependencies`, `payload` or `evidence`.
+- **V5.** `digest()` rejects `undefined`, `NaN`, infinity, functions, symbols, BigInt, class instances (for example `Date`, `Map`) and cycles with `Unsupported JSON value at <path>`. Duplicate object keys are never allowed: every read boundary (artifact store, lock records, review drafts, reviewer request bodies, glossary seed) parses with `parseStrictJson`, which rejects them (project owner decision 2026-10-15).
+
+Versioning and migration policy: `ADR-0002-migration.md`.
 
 ## Open for subsequent milestones
 Authentication and transactional lock persistence are M3 implementation work. This ADR fixes the contract; it does not claim a production security implementation.
