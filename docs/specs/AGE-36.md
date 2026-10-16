@@ -16,7 +16,7 @@ Motion on live websites cannot be captured as replayable evidence.
 
 - **B1 Sources.** Only `localhost`/`127.0.0.1` or URLs in an explicit allowlist file from the human. Others refused before any request. Assumption flagged until a rights policy exists.
 - **B2 Scenario.** JSON steps (`navigate`, `click`, `hover`, `wait`) and a viewport; replays deterministically.
-- **B3 Capture.** Headless Chrome over CDP (pattern of `tests/browser-harness.mjs`): screenshots at an interval, `Animation` domain for CSS animations and transitions, computed styles of selected elements. Canvas/WebGL falls back to screenshots.
+- **B3 Capture.** Headless Chrome over CDP (pattern of `tests/browser-harness.mjs`): screenshots at an interval, `Animation` domain for CSS animations and transitions, computed styles of selected elements. Canvas/WebGL falls back to screenshots (Linear AGE-36 and RFC 0007 say video fallback; see Assumptions).
 - **B4 Claims.** CDP easing is labelled as the element's declared CSS timing function, never as original source. Unreadable values go to the uncertainty report.
 - **B5 Output.** Pack valid under AGE-34, source kind `website`.
 
@@ -42,4 +42,5 @@ In: scenario, allowlist. Out: evidence pack, uncertainty report.
 - Chrome missing: skip with a clear message, like the browser tests.
 
 ## Assumptions and open decisions (human decides)
+- Canvas/WebGL fallback: Linear says video, this spec says screenshots (no new dependency; AGE-35 can extract from a video recorded separately). Screenshots assumed until the owner decides. Owner: user.
 - Rights policy for real external sites. Until decided: localhost and allowlist only. Owner: user.

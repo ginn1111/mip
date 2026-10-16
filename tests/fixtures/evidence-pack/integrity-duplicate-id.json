@@ -81,7 +81,7 @@
       "concept": "magnetic",
       "proposedInterpretation": "focal pull toward the constellation",
       "sourceObservationIds": [
-        "obs-2"
+        "obs-1"
       ],
       "confidence": 0.5,
       "alternatives": [
@@ -102,7 +102,7 @@
     {
       "intentField": "constraints.mood",
       "observationIds": [
-        "obs-2"
+        "obs-1"
       ],
       "hypothesisIds": [
         "hyp-1"

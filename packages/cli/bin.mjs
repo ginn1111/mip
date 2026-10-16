@@ -2,11 +2,11 @@
 // mip CLI (docs/specs/AGE-30.md). Thin wrapper over the core packages: no gate logic and no approval of its own.
 // Exit codes: 0 ok, 1 usage or I/O, 2 gate BLOCKED, 3 approval refused.
 import {parseArgs} from 'node:util';
-import {readFile,writeFile,mkdir,readdir,access} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,readdir,access,realpath} from 'node:fs/promises';
 import {resolve,relative,isAbsolute,join,basename} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
-import {ArtifactStore,artifactDigest} from '../artifacts/index.mjs';
+import {ArtifactStore,parseStrictJson} from '../artifacts/index.mjs';
 import {validateGate} from '../gates/index.mjs';
 import {extractIntent,proposeSemanticContract,resolve as resolveTerms} from '../glossary/index.mjs';
 
@@ -15,7 +15,7 @@ const COMMANDS={
  init:'mip init [dir]                                        create mip.config.json and the artifact store',
  intent:'mip intent create --scene <id> --text <text> [--candidate <phrase>...]   write a draft intent-profile and semantic-contract',
  glossary:'mip glossary resolve --scene <id> --text <text>          show how each term resolves',
- validate:'mip validate --phase <phase> [--json]                  run the phase gate (exit 2 when BLOCKED)',
+ validate:'mip validate --phase <phase> [--json]                  run the phase gate (exit 2 when BLOCKED); gates the latest revision of each kind, across all scenes',
  preview:'mip preview --scene scorpio [--port <n>]                serve the human reviewer; approves nothing',
  lock:'mip lock --phase <phase>                                refuses: every approval happens in the web reviewer',
  status:'mip status [--json]                                     list artifacts, lifecycle and lock state',
@@ -24,41 +24,35 @@ class UsageError extends Error{}
 class Refused extends Error{}
 const fail=message=>{throw new UsageError(message);};
 const ID=/^[a-zA-Z0-9._-]+$/;
-// Duplicate JSON keys are never allowed (project owner decision). Self-contained until #13 lands
-// parseStrictJson; switch to that once it is on main. Checks every object, keys compared after unescaping.
-function parseConfig(text){
- const value=JSON.parse(text),stack=[];
- for(let i=0;i<text.length;i++){
-  const c=text[i];
-  if(c==='{'){stack.push(new Set());continue;}
-  if(c==='['){stack.push(null);continue;}
-  if(c==='}'||c===']'){stack.pop();continue;}
-  if(c!=='"')continue;
-  let j=i+1;while(text[j]!=='"')j+=text[j]==='\\'?2:1;
-  const key=JSON.parse(text.slice(i,j+1));let k=j+1;while(/\s/.test(text[k]??''))k++;
-  const keys=stack.at(-1);
-  if(text[k]===':'&&keys){if(keys.has(key))throw new SyntaxError('Duplicate JSON key: '+JSON.stringify(key));keys.add(key);}
-  i=j;
- }
- return value;
-}
-
 const help=name=>name?COMMANDS[name]+'\n':'mip <command> [options]\n\n'+Object.values(COMMANDS).map(c=>'  '+c).join('\n')+'\n\nExit codes: 0 ok, 1 usage or I/O, 2 gate BLOCKED, 3 approval refused.\n';
 const parse=(args,options)=>{try{return parseArgs({args,options:{help:{type:'boolean'},...options},allowPositionals:true,strict:true});}catch(e){fail(e.message.split('\n')[0]);}};
 
+const requirePhase=phase=>{
+ if(!phase)fail('--phase is required; one of '+PHASES.join(', '));
+ if(!PHASES.includes(phase))fail('unknown phase "'+phase+'"; one of '+PHASES.join(', '));
+};
+const inside=(base,path)=>{const rel=relative(base,path);return !!rel&&!rel.startsWith('..')&&!isAbsolute(rel);};
 async function loadProject(){
  const cwd=process.cwd();let config;
- try{config=parseConfig(await readFile(join(cwd,'mip.config.json'),'utf8'));}
+ try{config=parseStrictJson(await readFile(join(cwd,'mip.config.json'),'utf8'));}
  catch(e){if(e.code==='ENOENT')fail('no mip.config.json here: run `mip init`');fail('unreadable mip.config.json: '+e.message);}
+ if(!config||typeof config!=='object'||Array.isArray(config))fail('mip.config.json must be a JSON object');
  if(config.protocol!=='mip/0.7')fail('unsupported protocol '+JSON.stringify(config.protocol));
- const dir=resolve(cwd,String(config.store??''));const rel=relative(cwd,dir);
- if(!rel||rel.startsWith('..')||isAbsolute(rel))fail('store must be inside the project directory');
- return {cwd,config,store:new ArtifactStore(dir),dir};
+ if(typeof config.projectId!=='string'||!config.projectId)fail('mip.config.json needs a projectId string');
+ if(typeof config.store!=='string'||!config.store)fail('mip.config.json needs a store path string');
+ const dir=resolve(cwd,config.store);
+ if(!inside(cwd,dir))fail('store must be inside the project directory');
+ // Symlinks: compare real paths so a linked .mip or .mip/artifacts cannot point the store outside.
+ let real;try{real=await realpath(dir);}catch(e){if(e.code==='ENOENT'||e.code==='ENOTDIR')fail('store '+config.store+' does not exist: run `mip init`');throw e;}
+ if(!inside(await realpath(cwd),real))fail('store must be inside the project directory');
+ return {cwd,config,store:new ArtifactStore(real),dir:real};
 }
+// A stray file where an artifact directory should be is one clear error, not a raw scandir message.
+const history=async(store,id)=>{try{return await store.history(id);}catch(e){if(e.code==='ENOTDIR')fail('unexpected file in store: '+id);throw e;}};
 async function allArtifacts(store,dir){
  let ids;try{ids=await readdir(dir);}catch(e){if(e.code==='ENOENT')return [];throw e;}
  const out=[];
- for(const id of ids.sort())for(const revision of await store.history(id)){
+ for(const id of ids.sort())for(const revision of await history(store,id)){
   const artifact=await store.read(id,revision);
   let lock='none';try{await access(store.path(id,revision)+'.lock');lock='present';}catch{}
   out.push({artifact,lock});
@@ -83,7 +77,7 @@ const commands={
   if(!values.text?.trim())fail('--text is required');
   const {config,store,dir}=await loadProject();
   const intentId=values.scene+'-intent',semanticId=values.scene+'-semantic';
-  const next=async id=>{try{return (await store.history(id)).at(-1)+1;}catch(e){if(e.code==='ENOENT')return 1;throw e;}};
+  const next=async id=>{try{return (await history(store,id)).at(-1)+1;}catch(e){if(e.code==='ENOENT')return 1;throw e;}};
   const intentRev=await next(intentId),semanticRev=await next(semanticId);
   const intent=extractIntent(values.text,{sceneId:values.scene,candidates:values.candidate??[]});
   const base={protocol:'mip/0.7',projectId:config.projectId,lifecycle:'draft',evidence:[],approvals:[]};
@@ -119,26 +113,27 @@ const commands={
  async verify(args){parse(args,{});return runGate('verification',false);},
  async lock(args){
   const {values}=parse(args,{phase:{type:'string'}});
-  if(!values.phase)fail('--phase is required; one of '+PHASES.join(', '));
-  if(!PHASES.includes(values.phase))fail('unknown phase "'+values.phase+'"; one of '+PHASES.join(', '));
-  await loadProject();
+  requirePhase(values.phase);
   // Project owner decision 2026-10-15: every approval, creative or not, happens in the web reviewer.
   throw new Refused('approval is a human act in the web reviewer: run `mip preview`');
  },
  async preview(args){
   const {values}=parse(args,{scene:{type:'string'},port:{type:'string'}});
   if(values.scene!=='scorpio')fail('only the bundled scene "scorpio" can be previewed today');
+  const port=values.port??process.env.PORT??'4173';
+  if(!/^\d+$/.test(port)||Number(port)>65535)fail('--port must be an integer from 0 to 65535');
   const {cwd}=await loadProject();
   for(const name of ['MIP_REVIEW_TOKEN','MIP_APPROVAL_SECRET','MIP_REVIEWER_ID'])if(!process.env[name])fail(name+' must be set; the host verifies the human, not this CLI');
   const serve=fileURLToPath(new URL('../../examples/scorpio/serve.mjs',import.meta.url));
-  const child=spawn(process.execPath,[serve],{cwd,stdio:['ignore','inherit','inherit'],env:{...process.env,PORT:values.port??process.env.PORT??'4173',MIP_REVIEW_DIR:process.env.MIP_REVIEW_DIR||join(cwd,'.mip/reviews')}});
-  const stop=()=>child.kill('SIGTERM');process.on('SIGINT',stop);process.on('SIGTERM',stop);
-  await new Promise(r=>child.on('exit',r));
+  const child=spawn(process.execPath,[serve],{cwd,stdio:['ignore','inherit','inherit'],env:{...process.env,PORT:port,MIP_REVIEW_DIR:process.env.MIP_REVIEW_DIR||join(cwd,'.mip/reviews')}});
+  let stopped=false;const stop=()=>{stopped=true;child.kill('SIGTERM');};process.on('SIGINT',stop);process.on('SIGTERM',stop);
+  const [code]=await new Promise(r=>child.on('exit',(c,sig)=>r([c??(stopped?0:1),sig])));
+  if(code)console.error('mip: reviewer exited with code '+code);
+  return code;
  }};
 
 async function runGate(phase,json){
- if(!phase)fail('--phase is required; one of '+PHASES.join(', '));
- if(!PHASES.includes(phase))fail('unknown phase "'+phase+'"; one of '+PHASES.join(', '));
+ requirePhase(phase);
  const {store,dir}=await loadProject();const entries=await allArtifacts(store,dir);
  const inputs=[];
  for(const kind of ['intent-profile','semantic-contract','prototype-spec','prototype-review','implementation-contract','verification-record']){
