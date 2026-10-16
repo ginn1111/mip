@@ -6,7 +6,7 @@ owner: gintary
 
 # Spec — AGE-33 Optional MCP server and Ginflow plugin integration (design)
 
-Source: Linear AGE-33; RFC 0005 (tools get_status, resolve_glossary, create_intent, validate_artifact, validate_gate, create_prototype, get_preview, request_review, lock_artifact, verify_implementation; tools may request review but MUST NOT fabricate approval).
+Source: Linear AGE-33; RFC 0005 (tools `mip.get_status`, resolve_glossary, create_intent, validate_artifact, validate_gate, create_prototype, get_preview, request_review, lock_artifact, verify_implementation; tools may request review but MUST NOT fabricate approval).
 
 ## Problem
 
