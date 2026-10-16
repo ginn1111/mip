@@ -16,8 +16,5 @@
       ]},
       {"id": "3:1", "name": "Notes", "type": "SECTION"}
     ]}
-  ]},
-  "variables": {
-    "VariableID:1:1": {"name": "color/bg", "resolvedType": "COLOR", "valuesByMode": {"1:0": {"r": 0, "g": 0, "b": 0, "a": 1}}}
-  }
+  ]}
 }
