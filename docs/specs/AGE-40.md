@@ -32,6 +32,7 @@ In: references, human sessions. Out: metrics and report.
 ## Acceptance criteria
 - [ ] Metric code is deterministic on fixture outputs (B2).
 - [ ] The report contains no unmeasured number (B3).
+- [ ] `docs/reports/AGE-40.md` exists and is generated from the metrics output (B3).
 - [ ] `npm test` passes.
 
 ## Edge cases
