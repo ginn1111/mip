@@ -1,12 +1,12 @@
 import {createServer} from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {createHash,timingSafeEqual} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {ArtifactStore,artifactDigest,parseStrictJson} from '../../packages/artifacts/index.mjs';
+import {ArtifactStore,artifactDigest} from '../../packages/artifacts/index.mjs';
 import {ApprovalService,createApprovalAuthenticator} from '../../packages/artifacts/approval.mjs';
 import {PrototypeReviewService,ReviewRejected} from '../../packages/prototype/review-evidence.mjs';
 import {scorpio} from './review.mjs';
+import {HOSTS,sameToken,json,body} from '../host.mjs';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
 const JS='text/javascript; charset=utf-8',HTML='text/html; charset=utf-8';
@@ -19,16 +19,6 @@ const ASSETS={
  '/packages/prototype/review.mjs':['packages/prototype/review.mjs',JS],
  '/packages/prototype/index.mjs':['packages/prototype/index.mjs',JS],
 };
-const HOSTS=/^(127\.0\.0\.1|localhost)(:\d+)?$/;
-const sha=v=>createHash('sha256').update(String(v)).digest();
-const sameToken=(a,b)=>timingSafeEqual(sha(a),sha(b));
-const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
-async function body(req){
- const chunks=[];let size=0;
- for await(const chunk of req){size+=chunk.length;if(size>64*1024)throw new ReviewRejected('Request too large',413);chunks.push(chunk);}
- try{return parseStrictJson(Buffer.concat(chunks).toString('utf8'));}catch{throw new ReviewRejected('Malformed JSON');}
-}
-
 export async function createReviewerServer({directory,approvalSecret,reviewToken,reviewerId}){
  if(!directory||!approvalSecret||!reviewToken||!reviewerId)throw new Error('Reviewer host configuration required');
  const store=new ArtifactStore(directory);

@@ -8,7 +8,7 @@ import {join} from 'node:path';
 import {ArtifactStore,artifactDigest} from '../packages/artifacts/index.mjs';
 import {ApprovalService,createApprovalAuthenticator} from '../packages/artifacts/approval.mjs';
 import {validateGate} from '../packages/gates/index.mjs';
-import {createDrafts} from '../packages/draft-artifacts/index.mjs';
+import {buildDrafts} from '../packages/draft-artifacts/index.mjs';
 import {createAlignmentServer} from '../examples/alignment/serve.mjs';
 import {nearestFrame,framesOf} from '../examples/alignment/align.mjs';
 import {findChrome,launch} from './browser-harness.mjs';
@@ -22,7 +22,12 @@ const REVIEW=[{scenarioId:'reference',accepted:true,segmentReviews:[{segmentId:'
 async function withAlignment(fn,{serve=createAlignmentServer}={}){
  const directory=await mkdtemp(join(tmpdir(),'mip-align-'));
  try{
-  const store=new ArtifactStore(directory),{refs}=await createDrafts(store,pack(),{projectId:'scorpio'});
+  const store=new ArtifactStore(directory),refs=[];
+  // AGE-38 now keeps unresolved goal/initialState blocking, so a human cannot lock the semantic draft (its open owner decision). The host test setup clears the list only to reach the creative review under test.
+  for(const a of buildDrafts(pack(),{projectId:'scorpio'}).artifacts){
+   if(a.kind==='semantic-contract')a.payload.blockingAmbiguities=[];
+   refs.push(await store.create({...a,dependencies:refs.slice(0,a.dependencies.length)}));
+  }
   // Host-side setup of the unrelated intent/semantic locks, like tests/support.mjs lockBase. The creative artifacts are never locked here.
   const auth=createApprovalAuthenticator({issuer:'t',secret:'s',authenticate:async()=>({id:'h0',role:'human'})});
   const base=new ApprovalService(store,{...auth,loadDependency:r=>base.sealed(r.id,r.revision)});
@@ -135,6 +140,41 @@ test('B5/B1: approval needs mode and every transition accepted; then gate implem
  assert.equal(out.status,'PASS',JSON.stringify(out.violations));
  assert.equal((await api('PUT','/api/mode',{prototypeRef:v.ref,mode:'adapt'})).status,409,'locked revision takes no changes');
  v=await view(api);assert.equal(v.locked,true);
+}));
+
+test('blocker: a foreign prototype ref cannot be mode-set, decided, edited, drafted or approved',()=>withAlignment(async({api,store,protoId,directory})=>{
+ // A second, valid prototype-spec in the same store that the host is NOT reviewing.
+ const foreign=await store.create({...await store.read(protoId,1),id:'foreign-proto'}),fref={id:foreign.id,revision:foreign.revision,digest:foreign.digest};
+ const calls=[['PUT','/api/mode',{prototypeRef:fref,mode:'adapt'}],['PUT','/api/decision',{prototypeRef:fref,observationId:'obs-1',decision:'accepted'}],
+  ['POST','/api/edit',{prototypeRef:fref,observationId:'obs-1',value:1}],['PUT','/api/draft',{prototypeRef:fref,status:'draft',scenarioReviews:REVIEW,baseSavedAt:null}],
+  ['POST','/api/reviews',{prototypeRef:fref,decision:'approved'}]];
+ for(const [m,p,b] of calls){const r=await api(m,p,b);assert.ok(r.status>=400&&r.status<500,m+' '+p+' '+r.status);}
+ await assert.rejects(()=>readFile(join(directory,foreign.id,'1.alignment.json')),/ENOENT/,'no sidecar for foreign artifact');
+ await assert.rejects(()=>readFile(join(directory,protoId+'-review','1.json')),/ENOENT/,'review id not squatted');
+}));
+
+test('blocker: approval needs the latest revision; stale revision 1 cannot be locked',()=>withAlignment(async({api,store,protoId})=>{
+ const v1=await view(api);
+ await api('PUT','/api/mode',{prototypeRef:v1.ref,mode:'replicate'});
+ await decideAll(api,v1);
+ assert.equal((await api('POST','/api/edit',{prototypeRef:v1.ref,observationId:'obs-2',value:0.9})).status,201);
+ const r=await approveFlow(api,v1);
+ assert.equal(r.status,409,JSON.stringify(r.json));
+ await assert.rejects(()=>store.read(protoId+'-review',1),'no review created');
+}));
+
+test('B4 (sidecar; home is an owner decision): mode cannot change after approval',()=>withAlignment(async({api})=>{
+ const v=await view(api);
+ await api('PUT','/api/mode',{prototypeRef:v.ref,mode:'replicate'});await decideAll(api,v);
+ assert.equal((await approveFlow(api,v)).status,201);
+ assert.equal((await api('PUT','/api/mode',{prototypeRef:v.ref,mode:'adapt'})).status,409);
+ assert.equal((await view(api)).mode,'replicate');
+}));
+
+test('Origin: a cross-origin request is refused even with a valid token',()=>withAlignment(async({api})=>{
+ const v=await view(api),b={prototypeRef:v.ref,mode:'adapt'};
+ assert.equal((await api('PUT','/api/mode',b,{...AUTH,origin:'http://evil.example'})).status,403);
+ assert.equal((await api('PUT','/api/mode',b,{...AUTH,origin:'http://localhost:4174'})).status,200);
 }));
 
 test('server never serves the store and rejects foreign hosts',()=>withAlignment(async({url,protoId})=>{
