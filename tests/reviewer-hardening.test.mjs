@@ -82,3 +82,10 @@ test('startup refuses stored prototype that differs from bundled one',async()=>{
   await assert.rejects(()=>createReviewerServer(cfg(directory)),/differs/);
  }finally{await rm(directory,{recursive:true,force:true});}
 });
+
+test('a request body with a duplicate key is rejected with 400 (duplicate keys never allowed)',()=>withServer(async({base})=>{
+ const ref=await protoRef(base);
+ const body='{"prototypeRef":'+JSON.stringify(ref)+',"status":"draft","status":"changes_requested","scenarioReviews":'+JSON.stringify(reviews)+',"baseSavedAt":null}';
+ const res=await fetch(base+'/api/draft',{method:'PUT',headers:H,body});
+ assert.equal(res.status,400);assert.match((await res.json()).error,/Malformed JSON/);
+}));
