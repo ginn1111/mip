@@ -15,7 +15,7 @@ There is no agent-facing entry point. An agent has no instructions for the MIP p
 ## Desired behavior
 
 - **B1 Location.** `skills/<name>/SKILL.md` at repo root (Agent Skills format: YAML frontmatter `name`, `description`, then Markdown). Assumption: repo-root `skills/`; RFC 0005 fixes no path.
-- **B2 mip-director.** Describes the phases (intent, semantic, prototype, implementation, verification), the artifact each produces, and the order. Before using an upstream artifact the agent runs `mip validate --phase <phase>` (CLI) and stops on `BLOCKED`.
+- **B2 mip-director.** Describes the CLI gate phases `semantic, prototype, implementation, verification, complete` (the keys of `REQUIREMENTS` in `packages/gates/index.mjs`), the artifact each produces, and the order. There is no `intent` gate: the `intent-profile` is an input checked by the `semantic` gate. The skill covers `complete` (requires a locked `verification-record`). Before using an upstream artifact the agent runs `mip validate --phase <phase>` (CLI) and stops on `BLOCKED`.
 - **B3 Recovery.** Maps every violation code `packages/gates/index.mjs` can emit to a next action (for example `UNRESOLVED_AMBIGUITY` to mip-glossary, `MISSING_HUMAN_APPROVAL` to the web reviewer via `mip preview`).
 - **B4 mip-glossary.** Explains `resolve` and the statuses `resolved`, `ambiguous`, `unknown`; ambiguous or unknown terms are asked of the human, never guessed. Approval follows `glossary/GOVERNANCE.md` (direct human requirement or official source).
 - **B5 No self-approval.** Both skills say the agent never approves or locks; approval is a human act in the web reviewer.
