@@ -32,6 +32,7 @@ In: references, human sessions. Out: metrics and report.
 ## Acceptance criteria
 - [ ] Metric code is deterministic on fixture outputs (B2).
 - [ ] The report contains no unmeasured number (B3).
+- [ ] `docs/reports/AGE-40.md` exists and is generated from the metrics output (B3).
 - [ ] `npm test` passes.
 
 ## Edge cases
@@ -39,3 +40,6 @@ In: references, human sessions. Out: metrics and report.
 
 ## Assumptions and open decisions (human decides)
 - Human participants must come from the human. Owner: user.
+
+## Decision: AGE-39 alignment output not used (review fix)
+AGE-39 alignment decisions (accept/reject/edit of inferred transitions) are human acts in the web reviewer and have no machine-readable result this card may consume without reading approval state. The B2 metrics therefore compare ground truth to AGE-35/36 packs and AGE-38 drafts only. Revisit when the owner decides how alignment results feed evaluation.
