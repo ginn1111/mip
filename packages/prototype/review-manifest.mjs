@@ -6,7 +6,7 @@ import {reviewFrame} from './review.mjs';
 export const FRAME_MANIFEST_MEDIA_TYPE='application/vnd.mip.frame-manifest+json';
 const round=v=>typeof v==='number'?Math.round(v*1e6)/1e6:Array.isArray(v)?v.map(round):
  v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,round(x)])):v;
-const comments=(scenarioReviews,scenarioId)=>(scenarioReviews??[]).filter(r=>r?.scenarioId===scenarioId)
+const commentTimes=(scenarioReviews,scenarioId)=>(scenarioReviews??[]).filter(r=>r?.scenarioId===scenarioId)
  .flatMap(r=>(r.segmentReviews??[]).flatMap(s=>(s.comments??[]).map(c=>c.timeMs)));
 
 /** B2: sorted unique integer instants: bounds, in-range keyframes, segment edges, comment times. */
@@ -14,7 +14,7 @@ export function reviewInstants(spec,scenarioId,scenarioReviews){
  const inRange=t=>Number.isInteger(t)&&t>=0&&t<=spec.durationMs;
  const all=[0,spec.durationMs,...(spec.storyboard??[]).map(f=>f.timeMs),
   ...(spec.reviewSegments??[]).filter(s=>s.scenarioIds?.includes(scenarioId)).flatMap(s=>[s.startMs,s.endMs]),
-  ...comments(scenarioReviews,scenarioId)];
+  ...commentTimes(scenarioReviews,scenarioId)];
  return [...new Set(all.filter(inRange))].sort((a,b)=>a-b);
 }
 

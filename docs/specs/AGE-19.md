@@ -25,7 +25,7 @@ Linear: AGE-19. Authority: RFC 0002 (Linear document): classes known, contextual
 ## Inputs / outputs
 
 - In: free text plus optional `candidates` and layer arrays.
-- Out: matches with status `resolved`, `ambiguous` or `unknown`. No schema change: the `semantic-contract` payload already allows free `status` strings (to verify in plan step 1).
+- Out: matches with status `resolved`, `ambiguous` or `unknown`. No schema change: the `semantic-contract` schema `status` enum already includes `unknown`.
 
 ## Constraints
 

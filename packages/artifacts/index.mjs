@@ -15,7 +15,12 @@ function assertJson(value,path='$',seen=new Set()){
  const proto=Object.getPrototypeOf(value);
  if(!Array.isArray(value)&&proto!==Object.prototype&&proto!==null)bad(proto?.constructor?.name??'object');
  seen.add(value);
- if(Array.isArray(value))value.forEach((v,i)=>assertJson(v,`${path}[${i}]`,seen));
+ if(Object.getOwnPropertySymbols(value).length)bad('symbol key');
+ if(Array.isArray(value)){
+  for(let i=0;i<value.length;i++){if(!(i in value))throw new TypeError(`Unsupported JSON value at ${path}[${i}]: array hole`);assertJson(value[i],`${path}[${i}]`,seen);}
+  const extra=Object.keys(value).find(k=>!/^(0|[1-9]\d*)$/.test(k)||+k>=value.length);
+  if(extra!==undefined)throw new TypeError(`Unsupported JSON value at ${path}.${extra}: extra array property`);
+ }
  else for(const [k,v] of Object.entries(value))assertJson(v,`${path}.${k}`,seen);
  seen.delete(value);
 }

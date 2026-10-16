@@ -100,3 +100,16 @@ test('approval stores frame-manifest evidence; gate recomputes it and blocks emp
  assert.ok((await codes([entry,{...entry,uri:'mip:frame-manifest/x@1/y'}])).includes('REVIEW_EVIDENCE_MISMATCH'));
  assert.ok((await codes([entry,entry])).includes('REVIEW_EVIDENCE_MISMATCH'));
 }));
+
+test('sealed review with MISSING_REVIEW_EVIDENCE as the only violation',()=>setup(async({store,prototype,approval,authenticator})=>{
+ const lock=async a=>{await store.create(a);return approval.lock(a.id,a.revision,{principal:'human-session',decision:'approved',reviewedDigest:artifactDigest(a)});};
+ const base=[];
+ for(const [id,kind,payload] of [['intent','intent-profile',{}],['semantic','semantic-contract',{blockingAmbiguities:[]}]])
+  base.push(await lock({protocol:'mip/0.7',id,projectId:'scorpio',kind,revision:1,lifecycle:'approved',dependencies:[],payload,evidence:[],approvals:[]}));
+ const lockedP=await approval.lock('scorpio-prototype',1,{principal:'human-session',decision:'approved',reviewedDigest:artifactDigest(prototype)});
+ const pref={id:prototype.id,revision:1,digest:artifactDigest(prototype)};
+ const lockedR=await lock({protocol:'mip/0.7',id:'review',projectId:'scorpio',kind:'prototype-review',revision:1,lifecycle:'approved',
+  dependencies:[pref],payload:{prototypeRef:pref,reviewer:{id:'designer-1',role:'human'},scenarioReviews:completeReviews(),decision:'approved'},evidence:[],approvals:[]});
+ const out=await validateGate('implementation',[...base,lockedP,lockedR],ref=>approval.sealed(ref.id,ref.revision),{verifyApproval:authenticator.verifyApproval});
+ assert.deepEqual(out.violations.map(v=>v.code),['MISSING_REVIEW_EVIDENCE']);
+}));

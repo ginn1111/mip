@@ -2,11 +2,13 @@ import {readFileSync} from 'node:fs';
 import {parseStrictJson} from '../artifacts/index.mjs';
 const terms=parseStrictJson(readFileSync(new URL('../../glossary/core/seed.json', import.meta.url),'utf8'));
 export function glossary(){return structuredClone(terms);}
-const normalize=s=>String(s).toLocaleLowerCase('en-US');
+const normalize=s=>String(s).normalize('NFC').toLocaleLowerCase('en-US');
+const tokens=s=>normalize(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+/** One token key for `known` and dedupe: same rule as `contains`. */
+const tokenKey=s=>tokens(s).join(' ');
 const contains=(haystack,needle)=>{
- const tokens=normalize(needle).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
- const words=normalize(haystack).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
- return words.some((_,i)=>tokens.every((t,j)=>words[i+j]===t));
+ const t=tokens(needle),words=tokens(haystack);
+ return words.some((_,i)=>t.every((x,j)=>words[i+j]===x));
 };
 /** `candidates`: phrases the caller extracted. One that names no entry is `unknown`, never silently promoted (RFC 0002). */
 export function resolve(text,{project=[],scene=[],domain=[],candidates=[]}={}){
@@ -20,9 +22,17 @@ export function resolve(text,{project=[],scene=[],domain=[],candidates=[]}={}){
      interpretations:structuredClone(entry.interpretations),provenance:entry.provenance,approvalStatus:entry.status});
   }
  }
- const known=new Set([...scene,...project,...domain,...terms].flatMap(e=>[e.term,...e.aliases].map(normalize)));
- for(const c of new Set(candidates.map(c=>String(c).trim()).filter(Boolean)))
-  if(!known.has(normalize(c)))matches.push({term:c,status:'unknown',interpretations:[],provenance:null,approvalStatus:null});
+ if(!Array.isArray(candidates))throw new TypeError('candidates must be an array of strings');
+ const bad=candidates.findIndex(c=>typeof c!=='string');
+ if(bad>=0)throw new TypeError(`candidates[${bad}] must be a string`);
+ const known=new Set([...scene,...project,...domain,...terms].flatMap(e=>[e.term,...e.aliases].map(tokenKey)));
+ const seen=new Set();
+ for(const c of candidates){
+  const key=tokenKey(c);
+  if(!key||known.has(key)||seen.has(key))continue;
+  seen.add(key);
+  matches.push({term:c.trim(),status:'unknown',interpretations:[],provenance:null,approvalStatus:null});
+ }
  return matches;
 }
 export function extractIntent(text,options={}){

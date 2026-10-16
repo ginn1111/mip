@@ -48,10 +48,11 @@ export async function validateGate(phase,inputs,loadRef,{verifyApproval}={}){
  return {status:violations.length?'BLOCKED':'PASS',phase,violations};
 }
 
+const key=a=>a.id+'@'+a.revision;
 /** Every prototype-spec needs exactly one matching, complete, same-reviewer prototype-review. */
 function checkPrototypeEvidence(inputs,violations){
  const prototypes=inputs.filter(a=>a.kind==='prototype-spec'),reviews=inputs.filter(a=>a.kind==='prototype-review');
- const key=a=>a.id+'@'+a.revision,refOf=r=>r.payload?.prototypeRef;
+ const refOf=r=>r.payload?.prototypeRef;
  for(const prototype of prototypes){
   const matches=reviews.filter(r=>refOf(r)?.id===prototype.id&&refOf(r)?.revision===prototype.revision);
   if(matches.length===0){violations.push({code:'MISSING_PROTOTYPE_REVIEW',artifact:key(prototype)});continue;}
@@ -75,7 +76,7 @@ function checkPrototypeEvidence(inputs,violations){
 
 /** Review evidence must equal the frame manifests recomputed from the prototype and the review's comments (AGE-27 B6). */
 function checkReviewEvidence(prototype,review,violations){
- const artifact=review.id+'@'+review.revision,actual=review.evidence;
+ const artifact=key(review),actual=review.evidence;
  let expected;
  try{expected=expectedEvidence(prototype,review.payload.scenarioReviews);}
  catch{violations.push({code:'REVIEW_EVIDENCE_MISMATCH',artifact});return;}
