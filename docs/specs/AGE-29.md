@@ -36,10 +36,11 @@ In: none at runtime. Out: two SKILL.md files, an example spec, tests.
 - [ ] The example passes `validatePrototype` and `planValid` (B3).
 - [ ] The integration test fails if the example becomes invalid (B5).
 - [ ] A test fails if either skill instructs approving or locking (B2, B4).
+- [ ] A `verification-record` built per mip-verify validates against `schemas/v0.7/payload.schema.json` (B4).
 - [ ] `npm test` passes.
 
 ## Edge cases
 - The implementation runtime (AGE-31) may not exist yet; the test covers the verification-record shape only.
 
 ## Assumptions and open decisions (human decides)
-- Numeric tolerance for implementation checks: assumed 1e-6 on evaluated properties at review instants. Owner: user.
+- Numeric tolerance for implementation checks: 1e-6 on evaluated properties at review instants is an assumption pending owner decision (same status in AGE-31). Owner: user.
