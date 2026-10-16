@@ -5,8 +5,46 @@ import {canonicalize} from 'json-canonicalize';
 
 const IMMUTABLE=['protocol','id','projectId','kind','revision','dependencies','payload','evidence'];
 export const immutableContent=a=>Object.fromEntries(IMMUTABLE.map(k=>[k,a[k]]));
-export const digest=value=>'sha256:'+createHash('sha256').update(canonicalize(value),'utf8').digest('hex');
+/** ADR-0001: only plain JSON may be digested. Without this, NaN/Infinity hash like null and undefined like a missing key. */
+function assertJson(value,path='$',seen=new Set()){
+ const bad=why=>{throw new TypeError(`Unsupported JSON value at ${path}: ${why}`);};
+ if(value===null||typeof value==='string'||typeof value==='boolean')return;
+ if(typeof value==='number'){if(!Number.isFinite(value))bad(String(value));return;}
+ if(typeof value!=='object')bad(typeof value);
+ if(seen.has(value))bad('cycle');
+ const proto=Object.getPrototypeOf(value);
+ if(!Array.isArray(value)&&proto!==Object.prototype&&proto!==null)bad(proto?.constructor?.name??'object');
+ seen.add(value);
+ if(Array.isArray(value))value.forEach((v,i)=>assertJson(v,`${path}[${i}]`,seen));
+ else for(const [k,v] of Object.entries(value))assertJson(v,`${path}.${k}`,seen);
+ seen.delete(value);
+}
+export const digest=value=>{assertJson(value);return 'sha256:'+createHash('sha256').update(canonicalize(value),'utf8').digest('hex');};
 export const artifactDigest=a=>digest(immutableContent(a));
+
+/**
+ * JSON.parse that rejects duplicate object keys (project owner decision): JSON.parse keeps the last
+ * value, so `{"goal":"seen","goal":"hidden"}` would digest a value no reviewer saw. Scans keys only;
+ * JSON.parse validates syntax and builds the value. Keys compare after unescaping ("a" == "\u0061").
+ */
+export function parseStrictJson(text){
+ const value=JSON.parse(text);
+ const stack=[];let i=0;
+ while(i<text.length){
+  const c=text[i];
+  if(c==='{'){stack.push(new Set());i++;continue;}
+  if(c==='['){stack.push(null);i++;continue;}
+  if(c==='}'||c===']'){stack.pop();i++;continue;}
+  if(c!=='"'){i++;continue;}
+  let j=i+1;while(text[j]!=='"')j+=text[j]==='\\'?2:1;
+  const str=JSON.parse(text.slice(i,j+1));
+  let k=j+1;while(/\s/.test(text[k]??''))k++;
+  const keys=stack.at(-1);
+  if(text[k]===':'&&keys){if(keys.has(str))throw new SyntaxError('Duplicate JSON key: '+JSON.stringify(str));keys.add(str);}
+  i=j+1;
+ }
+ return value;
+}
 
 export class ArtifactStore {
  constructor(directory){this.directory=directory;}
@@ -14,7 +52,7 @@ export class ArtifactStore {
   if(!/^[a-zA-Z0-9._-]+$/.test(id)||!Number.isSafeInteger(revision)||revision<1)throw new Error('Invalid artifact ID/revision');
   return join(this.directory,id,String(revision)+'.json');
  }
- async read(id,revision){return JSON.parse(await readFile(this.path(id,revision),'utf8'));}
+ async read(id,revision){return parseStrictJson(await readFile(this.path(id,revision),'utf8'));}
  async create(artifact){
   const target=this.path(artifact.id,artifact.revision);
   if(artifact.protocol!=='mip/0.7')throw new Error('Unsupported protocol');

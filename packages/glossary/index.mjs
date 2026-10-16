@@ -1,5 +1,6 @@
 import {readFileSync} from 'node:fs';
-const terms=JSON.parse(readFileSync(new URL('../../glossary/core/seed.json', import.meta.url),'utf8'));
+import {parseStrictJson} from '../artifacts/index.mjs';
+const terms=parseStrictJson(readFileSync(new URL('../../glossary/core/seed.json', import.meta.url),'utf8'));
 export function glossary(){return structuredClone(terms);}
 const normalize=s=>String(s).toLocaleLowerCase('en-US');
 const contains=(haystack,needle)=>{
