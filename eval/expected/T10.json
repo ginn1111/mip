@@ -1,0 +1,53 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T10",
+  "intents": [
+    {
+      "id": "stagger",
+      "critical": true,
+      "keywords": [
+        "stagger"
+      ]
+    },
+    {
+      "id": "rack-focus",
+      "critical": true,
+      "keywords": [
+        "rack-focus",
+        "rack focus"
+      ]
+    },
+    {
+      "id": "dolly",
+      "critical": true,
+      "keywords": [
+        "dolly-in",
+        "dolly"
+      ]
+    },
+    {
+      "id": "order",
+      "critical": true,
+      "keywords": [
+        "then",
+        "sequence",
+        "order"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "stagger",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "rack-focus",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "dolly-in",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T15",
+  "group": "interactive",
+  "scene": "scorpio",
+  "prompt": "Scrubbing the timeline should show the reveal at any time; pause must hold the exact frame."
+}

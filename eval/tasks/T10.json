@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T10",
+  "group": "multistage",
+  "scene": "scorpio",
+  "prompt": "First stagger the stars in, then rack-focus to Scorpio, then dolly-in."
+}

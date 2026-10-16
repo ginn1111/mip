@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T03",
+  "group": "explicit-motion",
+  "scene": "scorpio",
+  "prompt": "Orbit the camera around the globe once, using an arc path with parallax on the star layer."
+}

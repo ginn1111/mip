@@ -1,0 +1,42 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T11",
+  "intents": [
+    {
+      "id": "staging",
+      "critical": true,
+      "keywords": [
+        "staging"
+      ]
+    },
+    {
+      "id": "reveal",
+      "critical": true,
+      "keywords": [
+        "reveal"
+      ]
+    },
+    {
+      "id": "loop",
+      "critical": true,
+      "keywords": [
+        "loop"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "staging",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "reveal",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "loop",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

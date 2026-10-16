@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T11",
+  "group": "multistage",
+  "scene": "scorpio",
+  "prompt": "Open with staging on the globe, reveal the label, then loop the idle drift."
+}

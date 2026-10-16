@@ -1,0 +1,46 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T05",
+  "intents": [
+    {
+      "id": "magnetic",
+      "critical": true,
+      "keywords": [
+        "magnetic",
+        "focal",
+        "attraction"
+      ]
+    },
+    {
+      "id": "reveal",
+      "critical": true,
+      "keywords": [
+        "reveal"
+      ]
+    },
+    {
+      "id": "elegant",
+      "critical": false,
+      "keywords": [
+        "elegant"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "magnetic",
+      "classification": "ambiguous"
+    },
+    {
+      "phrase": "reveal",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "elegant",
+      "classification": "unknown"
+    }
+  ],
+  "criticalAmbiguities": [
+    "magnetic"
+  ]
+}

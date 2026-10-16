@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T01",
+  "group": "explicit-motion",
+  "scene": "scorpio",
+  "prompt": "Rotate the Scorpio globe 360 degrees over 2 seconds with ease-in-out."
+}

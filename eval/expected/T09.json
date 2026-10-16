@@ -1,0 +1,56 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T09",
+  "intents": [
+    {
+      "id": "anticipation",
+      "critical": true,
+      "keywords": [
+        "anticipation",
+        "wind-up"
+      ]
+    },
+    {
+      "id": "spin",
+      "critical": true,
+      "keywords": [
+        "spin",
+        "rotate"
+      ]
+    },
+    {
+      "id": "follow-through",
+      "critical": true,
+      "keywords": [
+        "follow-through"
+      ]
+    },
+    {
+      "id": "settle-hold",
+      "critical": true,
+      "keywords": [
+        "settle",
+        "hold"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "anticipation",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "follow-through",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "settle",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "hold",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

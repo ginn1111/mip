@@ -1,0 +1,55 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T12",
+  "intents": [
+    {
+      "id": "squash",
+      "critical": true,
+      "keywords": [
+        "squash-and-stretch",
+        "squash"
+      ]
+    },
+    {
+      "id": "arc",
+      "critical": true,
+      "keywords": [
+        "arc"
+      ]
+    },
+    {
+      "id": "slow-in-slow-out",
+      "critical": true,
+      "keywords": [
+        "slow-in-slow-out",
+        "slow in"
+      ]
+    },
+    {
+      "id": "snappy",
+      "critical": false,
+      "keywords": [
+        "snappy"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "squash-and-stretch",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "arc",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "slow-in-slow-out",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "snappy",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

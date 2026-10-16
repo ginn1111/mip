@@ -1,0 +1,25 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T18",
+  "intents": [
+    {
+      "id": "still",
+      "critical": true,
+      "keywords": [
+        "still"
+      ]
+    },
+    {
+      "id": "rotate",
+      "critical": true,
+      "keywords": [
+        "rotate",
+        "rotation"
+      ]
+    }
+  ],
+  "glossary": [],
+  "criticalAmbiguities": [
+    "still vs rotate"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T06",
+  "intents": [
+    {
+      "id": "cinematic",
+      "critical": true,
+      "keywords": [
+        "cinematic"
+      ]
+    },
+    {
+      "id": "dreamy",
+      "critical": false,
+      "keywords": [
+        "dreamy"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "cinematic",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "dreamy",
+      "classification": "unknown"
+    }
+  ],
+  "criticalAmbiguities": [
+    "dreamy"
+  ]
+}

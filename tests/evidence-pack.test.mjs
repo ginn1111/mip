@@ -4,15 +4,15 @@ import assert from 'node:assert/strict';
 import {readFileSync,readdirSync} from 'node:fs';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import {digest} from '../packages/artifacts/index.mjs';
+import {digest,parseStrictJson} from '../packages/artifacts/index.mjs';
 import {validateEvidencePack,packEvidence,PACK_MEDIA_TYPE} from '../packages/evidence/index.mjs';
 
 const dir='tests/fixtures/evidence-pack/';
-const load=f=>JSON.parse(readFileSync(dir+f,'utf8'));
+const load=f=>parseStrictJson(readFileSync(dir+f,'utf8'));
 const ajv=new Ajv2020({allErrors:true,strict:false});addFormats(ajv);
-const schema=JSON.parse(readFileSync('schemas/v0.7/evidence-pack.schema.json','utf8'));
+const schema=parseStrictJson(readFileSync('schemas/v0.7/evidence-pack.schema.json','utf8'));
 const validate=ajv.compile(schema);
-const artifactValidate=ajv.compile(JSON.parse(readFileSync('schemas/v0.7/artifact.schema.json','utf8')));
+const artifactValidate=ajv.compile(parseStrictJson(readFileSync('schemas/v0.7/artifact.schema.json','utf8')));
 const index=load('index.json');
 const expectedCode={
  'integrity-unknown-source':'UNKNOWN_SOURCE','integrity-unknown-observation':'UNKNOWN_OBSERVATION','integrity-unknown-hypothesis':'UNKNOWN_HYPOTHESIS',
@@ -28,16 +28,62 @@ test('valid Scorpio pack passes the schema and the integrity checks',()=>{
  assert.equal(validate(pack),true,JSON.stringify(validate.errors));
  assert.deepEqual(validateEvidencePack(pack),{ok:true,violations:[]});
 });
+const schemaError={ // fixture -> [Ajv keyword, substring of instancePath+params]
+ 'schema-missing-confidence':['required','confidence'],'schema-confidence-range':['maximum','/confidence'],'schema-bad-digest':['pattern','/digest'],
+ 'schema-unknown-kind':['enum','/kind'],'schema-unknown-class':['enum','/provenanceClass'],'schema-extra-field':['additionalProperties',''],
+ 'schema-env-key-missing':['required','device'],'schema-missing-method':['required','measurementMethod'],'schema-bad-protocol':['const','/protocol']};
 for(const {file,reason} of load('index.json').filter(x=>x.file.startsWith('schema-')))
- test(`schema rejects ${file}: ${reason}`,()=>assert.equal(validate(load(file)),false));
+ test(`schema rejects ${file}: ${reason}`,()=>{
+  const [kw,where]=schemaError[file.replace('.json','')];
+  assert.equal(validate(load(file)),false);
+  assert.ok(validate.errors.some(e=>e.keyword===kw&&(e.instancePath+JSON.stringify(e.params)).includes(where)),JSON.stringify(validate.errors));
+ });
 for(const {file} of load('index.json').filter(x=>!x.file.startsWith('schema-')))
  test(`${file} is schema-valid but fails integrity with ${expectedCode[file.replace('.json','')]}`,()=>{
   const pack=load(file);
   assert.equal(validate(pack),true,JSON.stringify(validate.errors));
   const out=validateEvidencePack(pack);
   assert.equal(out.ok,false);
-  assert.ok(out.violations.some(v=>v.code===expectedCode[file.replace('.json','')]),JSON.stringify(out.violations));
+  assert.deepEqual([...new Set(out.violations.map(v=>v.code))],[expectedCode[file.replace('.json','')]],JSON.stringify(out.violations));
  });
+const good=()=>load('valid-scorpio.json');
+const codes=p=>validateEvidencePack(p).violations.map(v=>v.code);
+test('binding with unknown or missing provenanceClass is a violation',()=>{
+ for(const cls of ['GUESSED',undefined,null,'observed']){
+  const p=good();p.bindings[0].provenanceClass=cls;
+  assert.ok(codes(p).includes('UNKNOWN_PROVENANCE_CLASS'),String(cls));
+ }
+});
+test('non-object pack and non-array collections are violations, not empty lists',()=>{
+ for(const bad of [null,undefined,42,'x',[],{}])assert.equal(validateEvidencePack(bad).ok,false,JSON.stringify(bad));
+ for(const f of ['sources','observations','hypotheses','bindings'])
+  for(const v of [{a:1},'x',null,7]){const p=good();p[f]=v;
+   assert.ok(validateEvidencePack(p).violations.some(x=>x.code==='NOT_AN_ARRAY'&&x.field===f),`${f}=${JSON.stringify(v)}`);}
+ assert.equal(validateEvidencePack({sources:{a:1}}).ok,false);
+});
+test('validateEvidencePack never throws on bad items',()=>{
+ for(const f of ['sources','observations','hypotheses','bindings'])
+  for(const item of [null,42,'x',[],{}]){const p=good();p[f]=[item,item];
+   assert.doesNotThrow(()=>validateEvidencePack(p),`${f}:${JSON.stringify(item)}`);
+   assert.equal(validateEvidencePack(p).ok,false,`${f}:${JSON.stringify(item)}`);}
+ const p=good();p.observations[0].timeRangeMs='x';p.hypotheses[0].sourceObservationIds=5;p.bindings[0].observationIds=null;
+ assert.doesNotThrow(()=>validateEvidencePack(p));assert.equal(validateEvidencePack(p).ok,false);
+});
+test('same intentField bound with different provenance classes is a violation; same class twice is not',()=>{
+ const p=good();p.bindings.push({...p.bindings[2]});
+ assert.equal(validateEvidencePack(p).ok,true);
+ const q=good();q.bindings.push({intentField:'goal',observationIds:['obs-3'],hypothesisIds:[],provenanceClass:'DECLARED'});
+ assert.ok(codes(q).includes('CONFLICTING_PROVENANCE'));
+});
+test('packEvidence requires a non-empty uri and a valid pack',()=>{
+ for(const uri of ['',undefined,null,5])assert.throws(()=>packEvidence(good(),uri),/uri/);
+ const p=good();p.bindings[0].provenanceClass='GUESSED';
+ assert.throws(()=>packEvidence(p,'mip:evidence-pack/x'),/invalid evidence pack/);
+});
+test('schema: frameRate must be > 0 or null',()=>{
+ for(const fr of [0,-1]){const p=good();p.sources[0].environment.frameRate=fr;assert.equal(validate(p),false,String(fr));}
+ const p=good();p.sources[0].environment.frameRate=null;assert.equal(validate(p),true);
+});
 test('DECLARED binding may be empty, and an instant observation is valid',()=>{
  const pack=load('valid-scorpio.json');
  assert.ok(pack.bindings.some(b=>b.provenanceClass==='DECLARED'&&!b.observationIds.length&&!b.hypothesisIds.length));

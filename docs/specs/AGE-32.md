@@ -15,7 +15,7 @@ There is no evidence that MIP improves alignment or fidelity over normal prompti
 ## Desired behavior
 
 - **B1 Dataset.** `eval/tasks/*.json`: 20 tasks, four each of explicit motion, ambiguous artistic, multistage, interactive/interruptible, conflicting intents. Hidden expected intents in `eval/expected/`, never shown to the agent.
-- **B2 Harness.** `eval/run.mjs` records machine metrics for one arm and task: intent coverage, glossary classification accuracy, missed critical ambiguities, gate violations, revisions, elapsed time.
+- **B2 Harness.** `eval/run.mjs` records machine metrics for one arm and task: intent coverage, glossary classification accuracy, missed critical ambiguities, gate violations, revisions, elapsed time, token/cost, abandoned attempts. Task order is randomized per arm (seeded, recorded) per RFC 0006.
 - **B3 Human ratings.** Visual agreement and timing match need blind human raters. The harness exports blinded sheets; it never fills scores.
 - **B4 Report.** `docs/reports/AGE-32.md`: method, data, measured results, RFC 0006 caveats. Unmeasured targets are hypotheses.
 - **B5 Honesty.** Missing human ratings are reported as missing. No synthetic scores.
@@ -34,6 +34,8 @@ In: tasks, an agent runner per arm. Out: metrics JSON, blinded sheets, report.
 ## Acceptance criteria
 - [ ] 20 task and 20 expected files validate against a schema (B1).
 - [ ] Metrics on a fixture run are deterministic (B2).
+- [ ] Every arm uses the same model and environment; the harness refuses a run config where they differ (B2).
+- [ ] Metrics include token/cost and abandoned attempts; task order is randomized with a recorded seed (B2).
 - [ ] Rating sheets contain no arm labels (B3).
 - [ ] The report marks every unmeasured target as a hypothesis (B4, B5).
 - [ ] `npm test` passes.
@@ -43,4 +45,4 @@ In: tasks, an agent runner per arm. Out: metrics JSON, blinded sheets, report.
 
 ## Assumptions and open decisions (human decides)
 - Human raters (who, how many) must come from the human. Owner: user.
-- Agent and model per arm. Owner: user.
+- Agent and model: RFC 0006 requires the same model and environment for all arms, so only the arm's MIP tooling differs. Which single model and environment: owner: user.

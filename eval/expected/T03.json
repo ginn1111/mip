@@ -1,0 +1,42 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T03",
+  "intents": [
+    {
+      "id": "orbit",
+      "critical": true,
+      "keywords": [
+        "orbit"
+      ]
+    },
+    {
+      "id": "arc",
+      "critical": false,
+      "keywords": [
+        "arc"
+      ]
+    },
+    {
+      "id": "parallax",
+      "critical": true,
+      "keywords": [
+        "parallax"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "orbit",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "arc",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "parallax",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

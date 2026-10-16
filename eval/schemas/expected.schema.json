@@ -1,0 +1,8 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","additionalProperties":false,
+ "required":["protocol","taskId","intents","glossary","criticalAmbiguities"],
+ "properties":{"protocol":{"const":"mip/0.7"},"taskId":{"type":"string","pattern":"^T[0-9]{2}$"},
+  "intents":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["id","critical","keywords"],
+   "properties":{"id":{"type":"string","minLength":1},"critical":{"type":"boolean"},"keywords":{"type":"array","minItems":1,"items":{"type":"string","minLength":1}}}}},
+  "glossary":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["phrase","classification"],
+   "properties":{"phrase":{"type":"string","minLength":1},"classification":{"enum":["resolved","ambiguous","unknown"]}}}},
+  "criticalAmbiguities":{"type":"array","items":{"type":"string","minLength":1}}}}

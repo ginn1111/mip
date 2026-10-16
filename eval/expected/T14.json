@@ -1,0 +1,36 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T14",
+  "intents": [
+    {
+      "id": "click-start",
+      "critical": true,
+      "keywords": [
+        "click"
+      ]
+    },
+    {
+      "id": "mid-spin-interrupt",
+      "critical": true,
+      "keywords": [
+        "second click",
+        "interrupt",
+        "mid-spin"
+      ]
+    },
+    {
+      "id": "settle",
+      "critical": true,
+      "keywords": [
+        "settle"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "settle",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": []
+}

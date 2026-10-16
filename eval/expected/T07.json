@@ -1,0 +1,42 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T07",
+  "intents": [
+    {
+      "id": "draw-in",
+      "critical": true,
+      "keywords": [
+        "draw",
+        "draw in"
+      ]
+    },
+    {
+      "id": "organic",
+      "critical": true,
+      "keywords": [
+        "organic",
+        "natural"
+      ]
+    },
+    {
+      "id": "shimmer",
+      "critical": false,
+      "keywords": [
+        "shimmer"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "organic",
+      "classification": "resolved"
+    },
+    {
+      "phrase": "shimmer",
+      "classification": "unknown"
+    }
+  ],
+  "criticalAmbiguities": [
+    "shimmer"
+  ]
+}

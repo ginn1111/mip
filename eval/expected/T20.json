@@ -1,0 +1,30 @@
+{
+  "protocol": "mip/0.7",
+  "taskId": "T20",
+  "intents": [
+    {
+      "id": "no-easing",
+      "critical": true,
+      "keywords": [
+        "no easing",
+        "linear"
+      ]
+    },
+    {
+      "id": "ease-in-out",
+      "critical": true,
+      "keywords": [
+        "ease-in-out"
+      ]
+    }
+  ],
+  "glossary": [
+    {
+      "phrase": "ease-in-out",
+      "classification": "resolved"
+    }
+  ],
+  "criticalAmbiguities": [
+    "no easing vs ease-in-out"
+  ]
+}

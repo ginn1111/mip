@@ -1,0 +1,7 @@
+{
+  "protocol": "mip/0.7",
+  "id": "T18",
+  "group": "conflicting-intents",
+  "scene": "scorpio",
+  "prompt": "Keep the globe perfectly still while it rotates smoothly."
+}
