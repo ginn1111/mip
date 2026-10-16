@@ -7,11 +7,16 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import {captureWeb,authorize,loadAllowlist,writeCapture,findChrome,SourceRefused} from '../packages/capture-web/index.mjs';
+import {execFileSync} from 'node:child_process';
+import {readdirSync} from 'node:fs';
+import {captureWeb,authorize,loadAllowlist,writeCapture,findChrome,chromeArgs,SourceRefused} from '../packages/capture-web/index.mjs';
 import {validateEvidencePack} from '../packages/evidence/index.mjs';
 
 const ajv=new Ajv2020({allErrors:true,strict:false});addFormats(ajv);
 const validate=ajv.compile(JSON.parse(await readFile('schemas/v0.7/evidence-pack.schema.json','utf8')));
+// Own TMPDIR so leak checks see only this file's Chrome profiles.
+// Short path: Chrome's profile socket path limit is ~100 chars.
+process.env.TMPDIR=await mkdtemp('/tmp/mct-');
 const chrome=findChrome();
 const skip=chrome?false:'Chrome not available; skipping real-browser capture tests';
 
@@ -131,3 +136,101 @@ test('unreadable selector goes to the uncertainty report; writeCapture lays out 
 test('Chrome missing is a clear error',async()=>{
  await assert.rejects(captureWeb({scenario:{viewport:{width:1,height:1},steps:[{type:'navigate',url:'http://127.0.0.1:1/'}]},chromeBin:null}),/No Chrome available/);
 });
+
+const allow=u=>[new URL(u)];
+
+test('B1: allowlist path match needs a boundary (exact, or entry ending with "/")',()=>{
+ const bare=allow('https://example.com/demo');
+ assert.match(authorize('https://example.com/demo',bare),/allowlist/);
+ for(const u of ['https://example.com/demo-evil','https://example.com/demoX/a','https://example.com/demo/','https://example.com/demo/a'])assert.throws(()=>authorize(u,bare),SourceRefused,u);
+ const dir=allow('https://example.com/demo/');
+ assert.match(authorize('https://example.com/demo/a/b',dir),/allowlist/);
+ assert.match(authorize('https://example.com/demo/',dir),/allowlist/);
+ for(const u of ['https://example.com/demo','https://example.com/demo-evil/','https://example.com/demoX/a','https://example.com/demo/../x'])assert.throws(()=>authorize(u,dir),SourceRefused,u);
+ assert.match(authorize('https://example.com/any/thing',allow('https://example.com')),/allowlist/);
+});
+
+test('B1: only literal localhost and 127.0.0.1 are local; [::1], 0.0.0.0, localhost., 127.0.0.2 are refused',()=>{
+ for(const u of ['http://[::1]:3000/','http://0.0.0.0/','http://localhost./','http://127.0.0.2/','http://localhost.evil.com/'])assert.throws(()=>authorize(u),SourceRefused,u);
+ assert.match(authorize('http://LOCALHOST:3000/'),/localhost/);
+});
+
+test('B2: scenario numbers and styles are validated; bad intervalMs rejected before Chrome starts',async()=>{
+ const ok={viewport:{width:1,height:1},steps:[{type:'navigate',url:'http://127.0.0.1:1/'},{type:'wait',ms:10}]};
+ const run=(extra,opts={})=>captureWeb({scenario:{...ok,...extra},chromeBin:'/nonexistent/chrome',...opts});
+ for(const intervalMs of [0,-5,NaN,Infinity,1.5,'20',5])await assert.rejects(run({},{intervalMs}),/intervalMs/,String(intervalMs));
+ const w=ms=>({steps:[ok.steps[0],{type:'wait',ms}]});
+ for(const ms of [1.5,Infinity,NaN,-1,1e9])await assert.rejects(run(w(ms)),/Invalid scenario/,String(ms));
+ await assert.rejects(run(w(600000),{intervalMs:10}),/frames/);
+ await assert.rejects(run({viewport:{width:1e9,height:1}}),/Invalid scenario/);
+ for(const styles of ['opacity',[],[1],[''],['a;b'],{}])await assert.rejects(run({styles,inspect:['#a']}),/styles/,JSON.stringify(styles));
+ await assert.rejects(run({inspect:'#a'}),/inspect/);
+ await assert.rejects(run({inspect:[1]}),/inspect/);
+});
+
+test('chromeArgs: sandboxed by default, no TCP debug port, no-sandbox only on opt-in, non-allowlisted network proxied to a dead end',()=>{
+ const a=chromeArgs({profile:'/p',hosts:['https://example.com']});
+ assert.ok(!a.includes('--no-sandbox'));
+ assert.ok(a.includes('--remote-debugging-pipe'));
+ assert.ok(!a.some(x=>x.startsWith('--remote-debugging-port')));
+ assert.ok(a.includes('--proxy-server=http://127.0.0.1:1'));
+ assert.ok(a.some(x=>x.startsWith('--proxy-bypass-list=')&&x.includes('https://example.com')&&x.includes('<-loopback>')));
+ assert.ok(chromeArgs({profile:'/p',hosts:[],noSandbox:true}).includes('--no-sandbox'));
+});
+
+const tmpEntries=()=>readdirSync(process.env.TMPDIR).filter(n=>n.startsWith('mip-capture-'));
+const chromeAlive=()=>{try{return execFileSync('pgrep',['-f',process.env.TMPDIR],{encoding:'utf8'}).trim().length>0;}catch{return false;}};
+const noLeak=async()=>{for(let i=0;i<50&&(chromeAlive()||tmpEntries().length);i++)await new Promise(r=>setTimeout(r,100));assert.deepEqual(tmpEntries(),[]);assert.equal(chromeAlive(),false);};
+
+test('timeouts: busy-loop page rejects per-call, kills Chrome, removes profile',{skip,timeout:60000},async()=>{
+ PAGES['/busy']='<!doctype html><script>while(1){}</script>';
+ await withServer(async({base})=>{
+  const t=Date.now();
+  await assert.rejects(captureWeb({scenario:scenarioFor(base,'/busy'),callTimeoutMs:1500,timeoutMs:30000}),/Timed out/);
+  assert.ok(Date.now()-t<20000);
+ });
+ await noLeak();
+});
+
+test('timeouts: overall deadline rejects a long scenario and cleans up',{skip,timeout:60000},async()=>{
+ await withServer(async({base})=>{
+  const scenario=scenarioFor(base,'/transition');scenario.steps.push({type:'wait',ms:600000});
+  await assert.rejects(captureWeb({scenario,timeoutMs:3000,intervalMs:400000}),/Timed out/);
+ });
+ await noLeak();
+});
+
+test('timeouts: Chrome dying mid-run rejects pending calls instead of hanging',{skip,timeout:60000},async()=>{
+ await withServer(async({base})=>{
+  const killer=setInterval(()=>{try{execFileSync('pkill',['-9','-f',process.env.TMPDIR]);}catch{}},1500);
+  try{await assert.rejects(captureWeb({scenario:scenarioFor(base,'/transition',{steps:[{type:'wait',ms:20000}]}),intervalMs:1000,timeoutMs:40000}),/closed|exited|Timed out/);}
+  finally{clearInterval(killer);}
+ });
+ await noLeak();
+});
+
+test('B1: page cannot reach a non-allowlisted host via fetch, WebSocket, worker, service worker or iframe (zero hits)',{skip,timeout:90000},async()=>{
+ // 127.0.0.2 is loopback but not an allowed hostname, so it stands in for an external host.
+ const ext=[];
+ const stub=http.createServer((req,res)=>{ext.push(req.url);res.setHeader('access-control-allow-origin','*');res.setHeader('content-type','text/javascript');res.end('1');});
+ stub.on('upgrade',(req,sock)=>{ext.push('ws:'+req.url);sock.destroy();});
+ await new Promise(r=>stub.listen(0,'127.0.0.2',r));
+ const E='http://127.0.0.2:'+stub.address().port;
+ PAGES['/leaky']=`<!doctype html><script>
+  fetch('${E}/fetch').catch(()=>{});
+  try{new WebSocket('${E.replace('http','ws')}/sock')}catch(e){}
+  try{new Worker('/w.js')}catch(e){}
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+ </script><iframe src="${E}/frame"></iframe>`;
+ PAGES['/w.js']=`fetch('${E}/from-worker').catch(()=>{});try{new WebSocket('${E.replace('http','ws')}/ws-worker')}catch(e){}`;
+ PAGES['/sw.js']=`fetch('${E}/from-sw').catch(()=>{});self.addEventListener('fetch',e=>{});`;
+ try{
+  await withServer(async({base})=>{
+   const out=await captureWeb({scenario:scenarioFor(base,'/leaky'),intervalMs:400});
+   assert.deepEqual(ext,[]);
+   assert.ok(out.uncertainty.some(u=>u.code==='REQUEST_BLOCKED'));
+  });
+ }finally{stub.closeAllConnections();await new Promise(r=>stub.close(r));}
+});
+
+test.after(()=>rm(process.env.TMPDIR,{recursive:true,force:true}));

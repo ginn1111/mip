@@ -3,7 +3,7 @@
 import {createServer} from 'node:http';
 import {readFile,writeFile,rename} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {createHash,timingSafeEqual,randomUUID} from 'node:crypto';
+import {randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {ArtifactStore,artifactDigest,parseStrictJson} from '../../packages/artifacts/index.mjs';
 import {ApprovalService,createApprovalAuthenticator} from '../../packages/artifacts/approval.mjs';
@@ -11,6 +11,7 @@ import {PrototypeReviewService,ReviewRejected} from '../../packages/prototype/re
 import {validatePrototype} from '../../packages/prototype/index.mjs';
 import {packEvidence} from '../../packages/evidence/index.mjs';
 import {framesOf,keyframesOf} from './align.mjs';
+import {HOSTS,sameToken,json,body,originOk} from '../host.mjs';
 
 const root=resolve(fileURLToPath(new URL('../../',import.meta.url)));
 const JS='text/javascript; charset=utf-8',HTML='text/html; charset=utf-8';
@@ -21,16 +22,7 @@ const ASSETS={
  '/examples/alignment/align.mjs':['examples/alignment/align.mjs',JS],
  '/packages/prototype/index.mjs':['packages/prototype/index.mjs',JS],
 };
-const HOSTS=/^(127\.0\.0\.1|localhost)(:\d+)?$/;
 const MODES=['replicate','adapt'];
-const sha=v=>createHash('sha256').update(String(v)).digest();
-const sameToken=(a,b)=>timingSafeEqual(sha(a),sha(b));
-const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(value));};
-async function body(req){
- const chunks=[];let size=0;
- for await(const chunk of req){size+=chunk.length;if(size>64*1024)throw new ReviewRejected('Request too large',413);chunks.push(chunk);}
- try{return parseStrictJson(Buffer.concat(chunks).toString('utf8'));}catch{throw new ReviewRejected('Malformed JSON');}
-}
 const numeric=v=>Number.isFinite(v)||(Array.isArray(v)&&v.length>0&&v.every(Number.isFinite));
 
 /** `pack` is the Reference Evidence Pack the drafts cite; `prototypeId` names the AGE-38 prototype-spec draft in `directory`. */
@@ -53,9 +45,12 @@ export async function createAlignmentServer({directory,approvalSecret,reviewToke
  // ponytail: single-process mutex like the file store; multi-process hosts need a file/DB lock.
  let queue=Promise.resolve();
  const serial=fn=>{const r=queue.then(fn);queue=r.catch(()=>{});return r;};
- /** Exact current revision or a client-safe rejection; stale refs and locked revisions cannot be changed. */
+ /** Only the prototype under review, at its latest revision; stale refs, foreign ids and locked revisions (unless open:false) are refused. */
+ const own=ref=>{if(ref?.id!==prototypeId)throw new ReviewRejected('Unknown prototype',404);};
  async function current(ref,{open=true}={}){
+  own(ref);
   const a=await reviews.currentPrototype(ref);
+  if(a.revision!==(await store.history(prototypeId)).at(-1))throw new ReviewRejected('Stale prototype revision',409);
   if(open&&await reviews.isLocked(a))throw new ReviewRejected('Prototype already locked',409);
   return a;
  }
@@ -67,7 +62,7 @@ export async function createAlignmentServer({directory,approvalSecret,reviewToke
  }
  return createServer(async(req,res)=>{
   try{
-   if(!HOSTS.test(req.headers.host??'')){json(res,403,{error:'Forbidden host'});return;}
+   if(!HOSTS.test(req.headers.host??'')||!originOk(req)){json(res,403,{error:'Forbidden host'});return;}
    if(!req.url.startsWith('/')||req.url.startsWith('//')){json(res,400,{error:'Bad request'});return;}
    const pathname=new URL(req.url,'http://localhost').pathname,method=req.method;
    if(method==='GET'&&pathname==='/api/alignment'){json(res,200,await view());return;}
@@ -93,7 +88,6 @@ export async function createAlignmentServer({directory,approvalSecret,reviewToke
     needHuman(req);const r=await body(req);
     json(res,201,await serial(async()=>{
      const a=await current(r.prototypeRef);
-     if(a.revision!==(await store.history(prototypeId)).at(-1))throw new ReviewRejected('Stale prototype revision',409);
      const key=keyframesOf(a.payload).find(k=>k.observationId===r.observationId);
      if(!key)throw new ReviewRejected('Unknown observation');
      const value=r.value??key.value,timeMs=r.timeMs??key.timeMs;
@@ -112,11 +106,11 @@ export async function createAlignmentServer({directory,approvalSecret,reviewToke
     }));return;
    }
    if(method==='GET'&&pathname==='/api/draft'){
-    needHuman(req);const q=new URL(req.url,'http://localhost').searchParams;
+    needHuman(req);const q=new URL(req.url,'http://localhost').searchParams;own({id:q.get('id')});
     json(res,200,{draft:await reviews.loadDraft({principal:principalOf(req),prototypeRef:{id:q.get('id'),revision:Number(q.get('revision')),digest:q.get('digest')}})});return;
    }
    if(method==='PUT'&&pathname==='/api/draft'){
-    needHuman(req);const r=await body(req);
+    needHuman(req);const r=await body(req);own(r?.prototypeRef);
     json(res,200,{draft:await reviews.saveDraft({principal:principalOf(req),prototypeRef:r?.prototypeRef,status:r?.status,scenarioReviews:r?.scenarioReviews,baseSavedAt:r?.baseSavedAt})});return;
    }
    if(method==='POST'&&pathname==='/api/reviews'){
