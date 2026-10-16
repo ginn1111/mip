@@ -1,6 +1,6 @@
 ---
 status: draft
-scope: specs/v0.7, tests/schema.test.mjs
+scope: specs/v0.7, tests/vectors.test.mjs, packages/artifacts/index.mjs, tests/strict-json-sites.test.mjs
 owner: gintary
 ---
 
@@ -19,14 +19,14 @@ ADR-0001 has one canonicalization vector and a five-line version policy. There i
   - V2 (RFC 8785 numbers): input `{"numbers":[333333333.33333329,1E30,4.50,2e-3,0.000000000000000000000000001],"literals":[null,true,false]}` gives `{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27]}`. This output was checked against the installed `json-canonicalize`.
   - V3 (key order by UTF-16 code unit): keys `"\u20ac"`, `"\r"`, `"1"`, `"\u00f6"`, `"\ufb33"` sort as RFC 8785 section 3.2.3 requires. Expected string is hand-derived in the plan before it is hard-coded.
   - V4: an artifact digest is unchanged when only `lifecycle`, `approvals` or `lock` change, and changes when `payload`, `evidence`, `dependencies` or `revision` change.
-  - V5: `undefined`, `NaN`, `Infinity` and duplicate keys are rejected by the digest function (ADR forbids them).
+  - V5: `digest` rejects `undefined`, `NaN`, `Infinity`, functions, symbols, BigInt, class instances, cycles, array holes, extra array properties and symbol keys with `Unsupported JSON value at <path>`. Duplicate keys are rejected at read boundaries by `parseStrictJson`, not by `digest` (parsed values no longer carry them).
 - **B2 Migration ADR.** New `specs/v0.7/ADR-0002-migration.md` with status `proposed`, covering: protocol identifier negotiation, additive vs incompatible changes, a migration always creates a new revision, which approvals and locks it invalidates, how dependents become stale, and what a reader does with an unsupported protocol.
 - **B3 Cross-reference.** ADR-0001 "Test vectors" lists V1 to V5 and links ADR-0002.
 
 ## Inputs / outputs
 
 - In: `json-canonicalize`, `digest` and `artifactDigest` from `packages/artifacts/index.mjs`.
-- Out: tests, one new ADR, a changed ADR-0001 section. No runtime change.
+- Out: tests, one new ADR, a changed ADR-0001 section. Runtime change: `assertJson` in `packages/artifacts/index.mjs` (digest input validation) and `parseStrictJson` at read boundaries.
 
 ## Constraints
 

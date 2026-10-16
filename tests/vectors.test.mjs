@@ -55,6 +55,14 @@ test('V5: plain JSON values still digest, including null, nested arrays and a sh
 test('V5: artifactDigest rejects an artifact with an unsupported value',()=>{
  assert.throws(()=>artifactDigest({...artifact,payload:{...artifact.payload,goal:NaN}}),/Unsupported JSON value/);
 });
+test('V5: array holes, extra array properties and symbol keys are rejected',()=>{
+ assert.throws(()=>digest([1,,3]),/Unsupported JSON value at \$\[1\]/);
+ assert.throws(()=>digest({a:new Array(2)}),/Unsupported JSON value/);
+ const extra=[1,2];extra.x=1;
+ assert.throws(()=>digest(extra),/Unsupported JSON value at \$\.x/);
+ assert.throws(()=>digest({[Symbol('s')]:1}),/Unsupported JSON value/);
+ assert.notEqual(digest([1,null,3]),digest([1,3]));
+});
 // Duplicate keys cannot be seen after JSON.parse (it keeps the last). Readers must not rely on
 // digest() to detect them; see ADR-0002 follow-up.
 test('V5 limitation: duplicate keys are invisible once parsed',()=>{
