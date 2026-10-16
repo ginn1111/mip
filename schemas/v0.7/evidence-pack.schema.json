@@ -85,7 +85,8 @@
                 "type": [
                   "number",
                   "null"
-                ]
+                ],
+                "exclusiveMinimum": 0
               }
             }
           },
