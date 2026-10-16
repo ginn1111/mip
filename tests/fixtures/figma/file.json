@@ -1,0 +1,20 @@
+{
+  "name": "Scorpio handoff (hand-written fixture)",
+  "lastModified": "2026-10-15T09:00:00Z",
+  "document": {"id": "0:0", "name": "Document", "type": "DOCUMENT", "children": [
+    {"id": "0:1", "name": "Page 1", "type": "CANVAS", "children": [
+      {"id": "1:1", "name": "Intro", "type": "FRAME", "absoluteBoundingBox": {"x": 0, "y": 0, "width": 1280, "height": 720}, "children": [
+        {"id": "1:2", "name": "Globe", "type": "ELLIPSE", "absoluteBoundingBox": {"x": 480, "y": 160, "width": 320, "height": 320}},
+        {"id": "1:3", "name": "Start", "type": "INSTANCE", "absoluteBoundingBox": {"x": 560, "y": 560, "width": 160, "height": 48},
+          "interactions": [{"trigger": {"type": "ON_CLICK"}, "actions": [{"type": "NODE", "destinationId": "2:1", "navigation": "NAVIGATE", "transition": {"type": "SMART_ANIMATE", "duration": 400, "easing": {"type": "EASE_OUT"}}}]}]},
+        {"id": "1:4", "name": "Skip", "type": "TEXT", "absoluteBoundingBox": {"x": 600, "y": 640, "width": 80, "height": 20},
+          "transitionNodeID": "2:1"},
+        {"id": "1:5", "name": "Sticky", "type": "STICKY"}
+      ]},
+      {"id": "2:1", "name": "Reveal", "type": "FRAME", "absoluteBoundingBox": {"x": 1400, "y": 0, "width": 1280, "height": 720}, "children": [
+        {"id": "2:2", "name": "Title", "type": "TEXT", "absoluteBoundingBox": {"x": 100, "y": 100, "width": 400, "height": 60}}
+      ]},
+      {"id": "3:1", "name": "Notes", "type": "SECTION"}
+    ]}
+  ]}
+}

@@ -14,10 +14,10 @@ Figma handoffs cannot become evidence for draft MIP artifacts.
 
 ## Desired behavior
 
-- **B1 Input.** A local file shaped like the Figma REST `GET /v1/files/:key` response. No network or token by default.
+- **B1 Input.** A local file shaped like the Figma REST `GET /v1/files/:key` response, plus an optional second local file shaped like `GET /v1/files/:key/variables/local` (variables under `meta.variables`; the files response has no variables). No network or token by default.
 - **B2 Mapping.** Frames become storyboard candidates; layers actor candidates (names, bounds); variables composition constraints; prototype interactions (`transitionNodeID`, transition type and duration) observations with method `figma-prototype`.
 - **B3 Unknowns.** Missing temporal data is listed as unknown with a suggestion to record a screen capture (AGE-35).
-- **B4 Output.** Pack valid under AGE-34, source kind `figma`, license notes from user input.
+- **B4 Output.** Pack valid under AGE-34, source kind `figma`, license notes from user input. Component data (components, styles, component sets) is omitted in v1 and listed as unsupported.
 
 ## Inputs / outputs
 
@@ -35,6 +35,8 @@ In: Figma file JSON. Out: evidence pack, unknowns list.
 - [ ] Every actor and observation traces to a node id (B2).
 - [ ] Missing timing yields unknowns, not guesses (B3).
 - [ ] Output validates under AGE-34 (B4).
+- [ ] License notes passed by the user appear in the pack; absent notes are recorded as missing, not invented (B4).
+- [ ] Component data in the input is listed as omitted (B2).
 - [ ] `npm test` passes.
 
 ## Edge cases
