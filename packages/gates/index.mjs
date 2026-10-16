@@ -1,5 +1,6 @@
-import {artifactDigest} from '../artifacts/index.mjs';
+import {artifactDigest,digest} from '../artifacts/index.mjs';
 import {reviewComplete} from '../prototype/review-rules.mjs';
+import {expectedEvidence} from '../prototype/review-manifest.mjs';
 
 const REQUIREMENTS={
  semantic:['intent-profile'],
@@ -64,9 +65,20 @@ function checkPrototypeEvidence(inputs,violations){
    const reviewer=review.payload?.reviewer?.id;
    if(!reviewer||humanApproval(review)?.actor.id!==reviewer||humanApproval(prototype)?.actor.id!==reviewer)
     violations.push({code:'REVIEWER_MISMATCH',artifact:at});
+   checkReviewEvidence(prototype,review,violations);
   }
  }
  for(const review of reviews)
   if(!prototypes.some(p=>p.id===refOf(review)?.id&&p.revision===refOf(review)?.revision))
    violations.push({code:'PROTOTYPE_REVIEW_MISMATCH',artifact:key(review)});
+}
+
+/** Review evidence must equal the frame manifests recomputed from the prototype and the review's comments (AGE-27 B6). */
+function checkReviewEvidence(prototype,review,violations){
+ const artifact=review.id+'@'+review.revision,actual=review.evidence;
+ let expected;
+ try{expected=expectedEvidence(prototype,review.payload.scenarioReviews);}
+ catch{violations.push({code:'REVIEW_EVIDENCE_MISMATCH',artifact});return;}
+ if(!Array.isArray(actual)||!expected.every(e=>actual.some(a=>a?.uri===e.uri)))violations.push({code:'MISSING_REVIEW_EVIDENCE',artifact});
+ else if(digest(actual)!==digest(expected))violations.push({code:'REVIEW_EVIDENCE_MISMATCH',artifact});
 }
