@@ -2,13 +2,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync,spawn} from 'node:child_process';
-import {mkdtemp,readFile,writeFile,readdir,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,readFile,writeFile,readdir,rm,symlink} from 'node:fs/promises';
+import {existsSync,readdirSync,readFileSync} from 'node:fs';
+import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {validateGate} from '../packages/gates/index.mjs';
 
 const BIN=new URL('../packages/cli/bin.mjs',import.meta.url).pathname;
-const mip=(args,{cwd,env}={})=>spawnSync(process.execPath,[BIN,...args],{cwd,encoding:'utf8',env:{...process.env,...env},timeout:30000});
+// B7: the no-approval store scan runs after every command (spec).
+const mip=(args,{cwd,env}={})=>{
+ const r=spawnSync(process.execPath,[BIN,...args],{cwd,encoding:'utf8',env:{...process.env,...env},timeout:30000});
+ if(cwd&&existsSync(join(cwd,'.mip')))scanSync(join(cwd,'.mip'));
+ return r;
+};
+function scanSync(dir){
+ for(const e of readdirSync(dir,{withFileTypes:true})){
+  const file=join(dir,e.name);
+  if(e.isDirectory()){scanSync(file);continue;}
+  assert.ok(!file.endsWith('.lock'),'lock file written: '+file);
+  if(!file.endsWith('.json'))continue;
+  const a=JSON.parse(readFileSync(file,'utf8'));
+  if('approvals' in a)assert.deepEqual(a.approvals,[],'approval written: '+file);
+  assert.equal('lock' in a,false,'lock written: '+file);
+ }
+}
 async function project(fn){
  const cwd=await mkdtemp(join(tmpdir(),'mip-cli-'));
  try{assert.equal(mip(['init'],{cwd}).status,0);await fn(cwd);}finally{await rm(cwd,{recursive:true,force:true});}
@@ -163,3 +181,77 @@ test('a mip.config.json with a duplicate key is rejected (duplicate keys never a
  await writeFile(join(cwd,'mip.config.json'),'{"protocol":"mip/0.7","projectId":"p","store":".mip/artifacts","store":"../outside"}');
  const r=mip(['status'],{cwd});assert.equal(r.status,1);assert.ok(oneLine(r),r.stderr);assert.match(r.stderr,/Duplicate JSON key/);
 }));
+
+test('a symlinked store that points outside the project is rejected and nothing is written outside',()=>project(async cwd=>{
+ const outside=await mkdtemp(join(tmpdir(),'mip-outside-'));
+ try{
+  await rm(join(cwd,'.mip/artifacts'),{recursive:true});await symlink(outside,join(cwd,'.mip/artifacts'));
+  const a=mip(['intent','create','--scene','s','--text','organic'],{cwd});
+  assert.equal(a.status,1,a.stdout);assert.ok(oneLine(a),a.stderr);assert.match(a.stderr,/inside the project/);
+  assert.deepEqual(await readdir(outside),[]);
+  await rm(join(cwd,'.mip'),{recursive:true});await mkdir(join(outside,'artifacts'));await symlink(outside,join(cwd,'.mip'));
+  const b=mip(['intent','create','--scene','s','--text','organic'],{cwd});
+  assert.equal(b.status,1,b.stdout);assert.ok(oneLine(b),b.stderr);assert.match(b.stderr,/inside the project/);
+  assert.deepEqual(await readdir(join(outside,'artifacts')),[]);
+ }finally{await rm(outside,{recursive:true,force:true});}
+}));
+
+test('a symlink that stays inside the project is accepted; a missing store is a clear error',()=>project(async cwd=>{
+ await symlink(join(cwd,'.mip/artifacts'),join(cwd,'alias'));
+ const path=join(cwd,'mip.config.json'),config=JSON.parse(await readFile(path,'utf8'));
+ await writeFile(path,JSON.stringify({...config,store:'alias'}));
+ assert.equal(mip(['status'],{cwd}).status,0);
+ await writeFile(path,JSON.stringify({...config,store:'nope'}));
+ const r=mip(['status'],{cwd});assert.equal(r.status,1);assert.ok(oneLine(r),r.stderr);assert.match(r.stderr,/mip init/);
+}));
+
+test('preview rejects a bad --port with one line',()=>project(async cwd=>{
+ const env={MIP_REVIEW_TOKEN:'t',MIP_APPROVAL_SECRET:'s',MIP_REVIEWER_ID:'r'};
+ for(const port of ['abc','-1','65536','1.5','','80x']){
+  const r=mip(['preview','--scene','scorpio','--port',port],{cwd,env});
+  assert.equal(r.status,1,'port '+JSON.stringify(port)+' '+r.stdout);assert.ok(oneLine(r),r.stderr);assert.match(r.stderr,/--port/);
+ }
+}));
+
+test('preview exits non-zero when the reviewer crashes',()=>project(async cwd=>{
+ const busy=createServer();await new Promise(r=>busy.listen(0,'127.0.0.1',r));
+ try{
+  const env={MIP_REVIEW_TOKEN:'t',MIP_APPROVAL_SECRET:'s',MIP_REVIEWER_ID:'r'};
+  const r=mip(['preview','--scene','scorpio','--port',String(busy.address().port)],{cwd,env});
+  assert.notEqual(r.status,0,r.stdout+r.stderr);
+ }finally{busy.close();}
+}));
+
+test('config shape: store must be a string, null and a missing projectId are clear errors',()=>project(async cwd=>{
+ const path=join(cwd,'mip.config.json'),config=JSON.parse(await readFile(path,'utf8'));
+ const {projectId,...noId}=config;
+ for(const [name,text,re] of [
+  ['array store',JSON.stringify({...config,store:['.mip/artifacts']}),/store/],
+  ['numeric store',JSON.stringify({...config,store:5}),/store/],
+  ['null config','null',/mip\.config\.json/],
+  ['array config','[]',/mip\.config\.json/],
+  ['missing projectId',JSON.stringify(noId),/projectId/]]){
+  await writeFile(path,text);
+  const r=mip(['status'],{cwd});assert.equal(r.status,1,name+' '+r.stdout);assert.ok(oneLine(r),name+r.stderr);assert.match(r.stderr,re,name);
+ }
+}));
+
+test('a stray file in the store is a one-line error, exit 1',()=>project(async cwd=>{
+ await writeFile(join(cwd,'.mip/artifacts/stray'),'x');
+ for(const args of [['status'],['validate','--phase','semantic']]){
+  const r=mip(args,{cwd});assert.equal(r.status,1,args.join(' '));assert.ok(oneLine(r),r.stderr);assert.doesNotMatch(r.stderr,/scandir|ENOTDIR/);assert.match(r.stderr,/stray/);
+ }
+ await rm(join(cwd,'.mip/artifacts/stray'));await writeFile(join(cwd,'.mip/artifacts/zodiac-intent'),'x');
+ const r=mip(['intent','create','--scene','zodiac','--text','organic'],{cwd});
+ assert.equal(r.status,1);assert.ok(oneLine(r),r.stderr);assert.doesNotMatch(r.stderr,/scandir|ENOTDIR/);
+}));
+
+test('lock outside a project still refuses with exit 3',async()=>{
+ const cwd=await mkdtemp(join(tmpdir(),'mip-cli-'));
+ try{const r=mip(['lock','--phase','prototype'],{cwd});assert.equal(r.status,3);assert.match(r.stderr,/mip preview/);assert.equal(mip(['lock','--phase','nope'],{cwd}).status,1);}
+ finally{await rm(cwd,{recursive:true,force:true});}
+});
+
+test('validate help states that the latest revision of each kind is used across scenes',()=>{
+ assert.match(mip(['validate','--help']).stdout,/latest revision of each kind/);
+});
