@@ -64,3 +64,23 @@ test('scene layer wins over core for a candidate and resolves once',()=>{
  const r=resolve('magnetic',{candidates:['magnetic'],scene:[scene]});
  assert.equal(r.length,1);assert.equal(r[0].id,core.id);assert.equal(r[0].status,'resolved');assert.equal(r[0].interpretations[0].meaning,'focus');
 });
+
+// Follow-up: candidates and known terms share the token key used by `contains`.
+const unknownTerms=(text,candidates)=>resolve(text,{candidates}).filter(m=>m.status==='unknown').map(m=>m.term);
+test('candidate matching a hyphenated term by tokens is known, not unknown',()=>{
+ const r=resolve('ease in please',{candidates:['ease in']});
+ assert.deepEqual(r.map(m=>m.status),['resolved']);
+});
+test('candidate with punctuation or case is known when its tokens match',()=>{
+ assert.deepEqual(unknownTerms('Organic!',['Organic!']),[]);
+ assert.deepEqual(unknownTerms('organic',['  ORGANIC ']),[]);
+});
+test('unknown candidates dedupe by token key (case, punctuation, NFC/NFD)',()=>{
+ assert.deepEqual(unknownTerms('x',['Zorbly','zorbly','zorbly!']),['Zorbly']);
+ assert.deepEqual(unknownTerms('x',['caf\u00e9','cafe\u0301']),['caf\u00e9']);
+ assert.deepEqual(unknownTerms('x',['!!!','--']),[]);
+});
+test('bad candidates fail with a clear error',()=>{
+ assert.throws(()=>resolve('x',{candidates:'zorbly'}),/candidates must be an array/);
+ for(const bad of [1,null,{},['a',2],[undefined]])assert.throws(()=>resolve('x',{candidates:bad}),/candidates/);
+});
