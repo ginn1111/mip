@@ -31,7 +31,7 @@ ok:     {"ok":true, ...tool fields}
 error:  {"ok":false,"code":"<CODE>","message":"<one line>"}
 ```
 
-Common error codes: `NO_PROJECT` (no `mip.config.json`), `BAD_CONFIG` (unreadable or duplicate key), `UNSUPPORTED_PROTOCOL`, `BAD_INPUT` (schema or ID rule), `STORE_ERROR` (I/O), `APPROVAL_REFUSED` (any attempt to approve or lock). Gate BLOCKED is a normal result, not an error: `ok:true, status:"BLOCKED"`.
+Common error codes: `NO_PROJECT` (no `mip.config.json`), `BAD_CONFIG` (unreadable or duplicate key), `UNSUPPORTED_PROTOCOL`, `BAD_INPUT` (schema or ID rule), `STORE_ERROR` (I/O), `NOT_FOUND` (unknown artifact or revision), `INVALID_PROTOTYPE` (`validatePrototype` rejected the spec), `NO_SEMANTIC_CONTRACT` (no semantic-contract to depend on), `PREVIEW_UNAVAILABLE` (reviewer not running or not configured), `REVIEW_UNSUPPORTED` (kind has no reviewer), `APPROVAL_REFUSED` (any attempt to approve or lock). `MISSING_DEPENDENCY` is a gate violation code from `validateGate`, never a tool error code. Gate BLOCKED is a normal result, not an error: `ok:true, status:"BLOCKED"`.
 
 Mapping to CLI exit codes: 0 -> `ok:true`; 1 -> `NO_PROJECT`, `BAD_CONFIG`, `BAD_INPUT`, `STORE_ERROR`; 2 -> `status:"BLOCKED"`; 3 -> `APPROVAL_REFUSED`.
 
@@ -41,6 +41,7 @@ RFC 0005 lists ten tools. All ten have a section. `lock_artifact` exists only as
 
 ### 3.1 get_status
 
+- Registered name: `mip.get_status` (RFC 0005). Other tools are written without prefix here; whether all carry `mip.` is part of Q12.
 - Input: none.
 - Output: `{ok, artifacts:[{id,revision,kind,lifecycle,lock:"none"|"present"}]}`. Same rows as `mip status --json`.
 - Core: `ArtifactStore.history`, `ArtifactStore.read`; lock = existence of `<revision>.json.lock` sidecar (as CLI `allArtifacts`).
@@ -70,7 +71,7 @@ RFC 0005 lists ten tools. All ten have a section. `lock_artifact` exists only as
 - Input: `{id:string, revision?:integer}` (default latest).
 - Output: `{ok, ref:{id,revision,digest}, kind, lifecycle, findings:[{code,detail?}]}`.
 - Core: `ArtifactStore.read` (strict), `artifactDigest`. Structural checks only: protocol is `mip/0.7`, `kind` known, digest computes; for `kind:"prototype-spec"` also `validatePrototype(payload)` (throw -> finding `INVALID_PROTOTYPE`).
-- Errors: `BAD_INPUT`, `STORE_ERROR` (unknown artifact -> `NOT_FOUND`).
+- Errors: `BAD_INPUT`, `NOT_FOUND` (unknown artifact or revision), `STORE_ERROR` (other I/O).
 - Distinct from `validate_gate`: this checks one artifact in isolation, never approval or lock state, never mutates.
 - Open: JSON Schema check (`schemas/`) is not wired into a runtime package today; adding it needs `ajv`, a devDependency only. See Q5.
 
@@ -84,10 +85,10 @@ RFC 0005 lists ten tools. All ten have a section. `lock_artifact` exists only as
 
 ### 3.6 create_prototype
 
-- Input: `{id:string, scene:string, spec:object}` where `spec` is the `prototype-spec` payload (actors, states, transitions, tracks, scenarios, `reviewSegments`, `durationMs`).
+- Input: `{id:string, scene:string, spec:object}` where `spec` is the `prototype-spec` payload; required fields: `durationMs`, `fps`, `actors`, `states`, `transitions`, `tracks`, `storyboard`, `scenarios`, `reviewSegments`.
 - Output: `{ok, prototype:{id,revision,digest}}`.
 - Core: `validatePrototype(spec)`, then `ArtifactStore.create` with `kind:"prototype-spec"`, `lifecycle:"draft"`, `dependencies` = latest `semantic-contract` ref, `approvals:[]`.
-- Errors: `BAD_INPUT`, `INVALID_PROTOTYPE` (message from `validatePrototype`), `MISSING_DEPENDENCY` (no semantic-contract), `STORE_ERROR`.
+- Errors: `BAD_INPUT`, `INVALID_PROTOTYPE` (message from `validatePrototype`), `NO_SEMANTIC_CONTRACT` (no semantic-contract), `STORE_ERROR`.
 - The agent authors the spec; the server does not generate motion. The CLI has no equivalent command; this is new surface (see section 6).
 - The caller cannot set lifecycle, approvals, lock, evidence.
 
@@ -112,7 +113,7 @@ RFC 0005 lists ten tools. All ten have a section. `lock_artifact` exists only as
 ### 3.9 lock_artifact
 
 - Input: `{id:string, revision?:integer}` (accepted so callers fail clearly).
-- Output: always error `{ok:false, code:"APPROVAL_REFUSED", message:"approval is a human act in the web reviewer; call request_review"}`, `isError:true`.
+- Output: always error `{ok:false, code:"APPROVAL_REFUSED", message:"approval is a human act in the web reviewer; call request_review", reviewerUrl}`, `isError:true`. `reviewerUrl` as in 3.7; omitted when the reviewer is not configured.
 - Errors: `APPROVAL_REFUSED` always; `BAD_INPUT` for a malformed argument.
 - Core: none. It validates input shape and refuses. It performs no store write, creates no `.lock` sidecar and calls no `ApprovalService`.
 - Spec B2 says `lock_artifact` becomes `request_review`. Two readings: (a) do not register `lock_artifact` at all and expose only `request_review`; (b) register it as an always-refusing alias, as `mip lock` does. This document assumes (b) for CLI parity and clearer failures from hosts that expect the RFC name. Decision is open (Q8).
@@ -140,7 +141,7 @@ Enforcement points:
 1. Static: tool registry contains no tool whose handler can reach an approval or lock function. A test greps the server sources for `ApprovalService`, `attestApproval`, `.lock` writes, and `approveDraft`. (Required when the server is built; see section 7.)
 2. Input: handlers build artifacts from a fixed template (`lifecycle:"draft"`, `approvals:[]`, `evidence:[]`). Caller fields named `lifecycle`, `approvals`, `lock`, `attestation` are rejected with `BAD_INPUT`, not ignored.
 3. Environment: the server process is started without the approval secret. Gate verification of creative approvals therefore cannot run inside it (Q3).
-4. Core gate: even a forged artifact written to disk cannot pass `validateGate` without a valid human approval and, for creative kinds, a verified attestation.
+4. Core gate is NOT a complete defence. Only creative kinds (`prototype-spec`, `prototype-review`) get attestation checks, and only when `verifyApproval` is passed (the server does not pass it, see 3.5). For every other kind the gate accepts what is on disk: a self-written `intent-profile` with `lifecycle:"locked"`, a self-written approval with role `human`, and a matching lock digest passes `validateGate('semantic')`. Core does not detect a forged non-creative approval today. The server's guarantee rests on points 1-3 (it never writes approvals or locks), not on the gate. Core is unchanged by this design. See Q13.
 
 Prompt-injection note: tool arguments and artifact text are untrusted data. The server never executes them and never echoes secrets.
 
@@ -208,4 +209,5 @@ Not part of this card. Recorded so the build card inherits it.
 - Q9 Source of `implementation-contract` and `verification-record` artifacts; no tool creates them. Inherited from AGE-30. Owner: user.
 - Q10 Ginflow plugin shape: direct MCP calls by workers, or a plugin wrapping them; where Ginflow keeps MIP gate results (card metadata field or comment). Owner: user.
 - Q11 Multi-project: one server per project root (assumed) or a project argument per call. Owner: user.
+- Q13 Verification of non-creative approval: the gate does not verify approvals on non-creative kinds, so forged approvals pass. Proposal (not decided): extend attestation checks to every approval kind once the web reviewer can approve non-creative artifacts. Until then keep current fail-closed behavior. Owner: user.
 - Q12 RFC 0005 text is not in the repo; confirm the ten tool names and the `get_preview` / `create_prototype` meanings used here. Owner: user.
