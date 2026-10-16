@@ -13,12 +13,12 @@ Run `mip validate --phase verification`. Stop on `BLOCKED`; follow the recovery 
 
 ## Compare
 
-1. Take the locked `prototype-spec` payload.
+1. Take the `prototype-spec` payload the human locked.
 2. For each scenario, get instants with `reviewInstants(spec, scenarioId, scenarioReviews)` and frames with `reviewManifest(spec, scenarioId, instants)` from `packages/prototype/review-manifest.mjs`. This is the frame manifest the human reviewed.
-3. Read the implementation's value of each actor property at each instant. Compare to the manifest frame (`animation.<actor>.<property>`) within tolerance 1e-6. One check per scenario and instant, or grouped, with a descriptive `name`.
+3. Read the implementation's value of each actor property at each instant. Compare to the manifest frame (`animation.<actor>.<property>`) within tolerance 1e-6 (used until the owner decides). One check per scenario and instant, or grouped, with a descriptive `name`.
 4. Parse stored or received JSON with `parseStrictJson` (`packages/artifacts/index.mjs`). Duplicate keys are never allowed.
 
-Assumption, open decision (owner: user): tolerance is 1e-6 on evaluated properties at review instants. Flag it; do not change it.
+Open decision (owner: user): numeric tolerance. 1e-6 on evaluated properties at review instants is used until the owner decides. Flag it; do not change it.
 
 ## Output
 

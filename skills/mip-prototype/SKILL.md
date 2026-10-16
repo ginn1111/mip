@@ -27,14 +27,14 @@ Worked example: `skills/mip-prototype/example.prototype.json`.
 
 ## Check it
 
-1. `validatePrototype(spec)` from `packages/prototype/index.mjs` throws on a bad spec.
+1. `validatePrototype(spec)` from `packages/prototype/index.mjs` throws on a bad spec. It does not check `fps`, `states`, `storyboard` or `reviewSegments`; the payload schema (`schemas/v0.7/payload.schema.json`) checks those. Validate the artifact against the schema too.
 2. `planValid(spec)` from `packages/prototype/review-rules.mjs` must be `true`.
 3. `evaluate(spec, scenarioId, timeMs)` returns the deterministic snapshot `{actors, state, events}`. Same spec, scenario and time always give the same snapshot. Evaluate every storyboard instant for every scenario and read the values before handoff.
 4. Parse stored or received JSON with `parseStrictJson` (`packages/artifacts/index.mjs`). Duplicate keys are never allowed.
 
 ## Hand off
 
-Run `mip preview --scene scorpio`. The human reviews every scenario and segment in the web reviewer and approves there.
+Tell the human the prototype is ready for review. The human starts the reviewer (`mip preview --scene scorpio`, which needs `MIP_REVIEW_TOKEN` and `MIP_APPROVAL_SECRET`). The agent never holds reviewer secrets or tokens and never runs `mip preview`. `mip preview` only shows the bundled scorpio prototype, not your spec. The human reviews every scenario and segment in the web reviewer and approves there.
 
 ## Rules
 

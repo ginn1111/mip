@@ -60,10 +60,27 @@ test('skills carry the no-self-approval rule and never instruct approving or loc
   const text=read(`skills/${name}/SKILL.md`);
   assert.match(text,/never approves and never locks/i,name);
   assert.match(text,/web reviewer/i,name);
-  // imperative approve/lock/sign off at line or sentence start, or after "and"/"then"
-  assert.doesNotMatch(text,/(^|[.:;]\s+|\b(and|then)\s+)[-\d.\s]*(approve|lock|sign off)\b/im,name+': instructs approve/lock');
-  assert.doesNotMatch(text,/^[-\d.\s]*(run\s+)?`?mip lock\b/im,name+': instructs mip lock');
+  // every line mentioning approve/lock must carry a prohibition or name the human
+  for(const [i,l] of text.split('\n').entries())
+   if(/\b(approv|lock)|mip lock/i.test(l))assert.match(l,/never|refuses|human/i,`${name}:${i+1}: ${l}`);
  }
+});
+
+test('mip-prototype: human starts the reviewer; agent never runs mip preview or holds reviewer secrets',()=>{
+ const p=read('skills/mip-prototype/SKILL.md');
+ assert.doesNotMatch(p,/^[-\d.\s]*run\s+`?mip preview/im,'instructs agent to run mip preview');
+ assert.match(p,/human starts the reviewer/i);
+ assert.match(p,/never holds? (the )?reviewer secrets? or tokens?/i);
+ assert.match(p,/MIP_REVIEW_TOKEN/);assert.match(p,/MIP_APPROVAL_SECRET/);
+ assert.match(p,/only shows the bundled scorpio prototype/i);
+ assert.match(p,/payload schema.*checks those/i);assert.match(p,/does not check `fps`, `states`, `storyboard` or `reviewSegments`/);
+  assert.doesNotMatch(p,/validatePrototype[^.]*\bchecks? (the )?(fps|storyboard)/i);
+});
+
+test('mip-verify: 1e-6 is used until the owner decides, not fixed',()=>{
+ const v=read('skills/mip-verify/SKILL.md');
+ assert.match(v,/used until the owner decides/i);
+  assert.doesNotMatch(v,/within tolerance 1e-6\./);
 });
 
 test('mip-prototype covers its APIs and handoff; mip-verify covers manifest and record keys',()=>{
