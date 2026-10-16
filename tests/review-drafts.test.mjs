@@ -194,3 +194,11 @@ test('changes_requested needs at least one comment, enforced by the service',()=
  await rejects(()=>reviews.saveDraft(saveReq(p,{status:'changes_requested',scenarioReviews:bare})),/comment/i,400);
  await reviews.saveDraft(saveReq(p,{status:'changes_requested'}));
 }));
+
+test('a draft file with a duplicate key is rejected as corrupt (duplicate keys never allowed)',()=>setup(async({store,reviews})=>{
+ const p=proto();await store.create(p);
+ await reviews.saveDraft(saveReq(p));
+ const path=draftPath(store,'proto',1),text=await readFile(path,'utf8');
+ await writeFile(path,text.replace('"status":','"status": "changes_requested", "status":'));
+ await rejects(()=>reviews.loadDraft({principal:'human',prototypeRef:ref(p)}),/Corrupt review draft/,409);
+}));

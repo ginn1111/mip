@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {createHash,timingSafeEqual} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {ArtifactStore,artifactDigest} from '../../packages/artifacts/index.mjs';
+import {ArtifactStore,artifactDigest,parseStrictJson} from '../../packages/artifacts/index.mjs';
 import {ApprovalService,createApprovalAuthenticator} from '../../packages/artifacts/approval.mjs';
 import {PrototypeReviewService,ReviewRejected} from '../../packages/prototype/review-evidence.mjs';
 import {scorpio} from './review.mjs';
@@ -26,7 +26,7 @@ const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'applicatio
 async function body(req){
  const chunks=[];let size=0;
  for await(const chunk of req){size+=chunk.length;if(size>64*1024)throw new ReviewRejected('Request too large',413);chunks.push(chunk);}
- try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new ReviewRejected('Malformed JSON');}
+ try{return parseStrictJson(Buffer.concat(chunks).toString('utf8'));}catch{throw new ReviewRejected('Malformed JSON');}
 }
 
 export async function createReviewerServer({directory,approvalSecret,reviewToken,reviewerId}){
