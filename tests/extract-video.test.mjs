@@ -101,6 +101,51 @@ test('storyboard folder: captions become storyboard-caption observations, digest
  assert.throws(()=>run(d),/duplicate/i);
 }));
 
+// Review fixes on PR #24.
+const PNG=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
+test('easing check ignores uri and actorId; scans keys and event/property/measurementMethod with word boundaries',()=>{
+ const o={id:'o',measurementMethod:'centroid-track',measuredValue:{axis:'x'}};
+ assert.doesNotThrow(()=>assertNoEasingClaim({observations:[{...o,actorId:'release-btn',evidenceRefs:[{uri:'file:///releases/release/a.png'}]}]}));
+ assert.doesNotThrow(()=>assertNoEasingClaim({observations:[{...o,event:'release',property:'increase'}]}));
+ assert.throws(()=>assertNoEasingClaim({observations:[{...o,event:'ease-in'}]}),/easing claim/);
+ assert.throws(()=>assertNoEasingClaim({observations:[{...o,property:'cubic-bezier'}]}),/easing claim/);
+ assert.throws(()=>assertNoEasingClaim({observations:[{...o,measurementMethod:'spring'}]}),/easing claim/);
+ assert.throws(()=>assertNoEasingClaim({observations:[{...o,measuredValue:{easing:'x'}}]}),/easing claim/);
+});
+
+test('storyboard under a folder named release is accepted',()=>tmp(async d=>{
+ const dir=join(d,'releases','release');await mkdir(dir,{recursive:true});
+ await writeFile(join(dir,'a.png'),PNG);await writeFile(join(dir,'captions.json'),JSON.stringify({'a.png':'card rests'}));
+ ok(run(dir).pack);
+}));
+
+test('malformed annotations fail closed with a clear error',{skip},()=>tmp(async d=>{
+ const f=join(d,'sq.mp4');gen(f,MOVE);
+ const ann=async v=>{const a=join(d,'ann.json');await writeFile(a,JSON.stringify(v));return a;};
+ const fail=async(v,re)=>{const a=await ann(v);assert.throws(()=>run(f,{annotations:a}),re);};
+ await fail({bindings:{}},/annotations\.bindings must be an array/);
+ await fail({bindings:[{intentField:'a',observationIds:'obs-1'}]},/observationIds must be an array of strings/);
+ await fail({bindings:[{intentField:'a',observationIds:[1]}]},/observationIds must be an array of strings/);
+ await fail({bindings:[{intentField:'a',observationIds:['obs-999']}]},/unknown observation/);
+ await fail({bindings:[null]},/needs intentField/);
+ await fail([],/annotations must be an object/);
+ ok(run(f,{annotations:await ann({bindings:[{intentField:'a',observationIds:['obs-1']}]})}).pack);
+}));
+
+test('storyboard caption keys cannot escape the folder',()=>tmp(async d=>{
+ const dir=join(d,'sb');await mkdir(dir);await writeFile(join(d,'secret.png'),PNG);await writeFile(join(dir,'a.png'),PNG);
+ for(const key of ['../secret.png','sub/a.png','sub\\a.png','..']){
+  await writeFile(join(dir,'captions.json'),JSON.stringify({[key]:'x'}));
+  assert.throws(()=>run(dir),/storyboard key/,key);
+ }
+}));
+
+test('ffmpeg timeout and oversize output give clear errors',{skip},()=>tmp(d=>{
+ const f=join(d,'sq.mp4');gen(f,MOVE);
+ assert.throws(()=>run(f,{timeoutMs:1}),/timed out/);
+ assert.throws(()=>run(f,{maxBuffer:100}),/too large/);
+}));
+
 const chrome=findChrome();
 test('Scorpio Canvas preview recorded to video produces an uncertainty report',{skip:(!chrome&&'no Chrome installed')||skip,timeout:120000},()=>withReviewer(async({browser:b,url,directory})=>{
  await b.goto(url);
@@ -120,4 +165,9 @@ test('Scorpio Canvas preview recorded to video produces an uncertainty report',{
  assert.ok(report.observations.length>=1);
  assert.equal(report.easingClaims,0);
  assert.ok(pack.observations.every(o=>o.confidence<1));
+}));
+
+test('final pack is checked against the schema shape; invalid capturedAt fails closed',()=>tmp(async d=>{
+ await writeFile(join(d,'a.png'),PNG);await writeFile(join(d,'captions.json'),JSON.stringify({'a.png':'x'}));
+ assert.throws(()=>extractEvidence(d,{capturedAt:'not-a-date'}),/schema shape violated at sources/);
 }));
